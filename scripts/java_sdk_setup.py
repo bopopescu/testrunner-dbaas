@@ -15,7 +15,7 @@ class JavaSdkSetup(object):
             while num_retries:
                 try:
                     print(cmd + "\n")
-                    if self._execute_on_slave(cmd, 30):
+                    if self._execute_on_subordinate(cmd, 30):
                         num_retries -= 1
                     else:
                         break
@@ -24,5 +24,5 @@ class JavaSdkSetup(object):
             else:
                 raise("Unable to perform {0} after 3 retries".format(cmd))
 
-    def _execute_on_slave(self, command, timeout):
+    def _execute_on_subordinate(self, command, timeout):
         return subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).wait(timeout)

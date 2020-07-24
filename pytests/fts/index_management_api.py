@@ -9,7 +9,7 @@ class IndexManagementAPI(FTSBaseTest):
 
     def setUp(self):
         super(IndexManagementAPI, self).setUp()
-        self.rest = RestConnection(self._cb_cluster.get_master_node())
+        self.rest = RestConnection(self._cb_cluster.get_main_node())
         self.fts_rest = RestConnection(self._cb_cluster.get_random_fts_node())
         self.sample_bucket_name = "travel-sample"
         self.sample_index_name = "idx_travel_sample_fts"
@@ -22,7 +22,7 @@ class IndexManagementAPI(FTSBaseTest):
         super(IndexManagementAPI, self).tearDown()
 
     def test_ingest_control(self):
-        self.load_sample_buckets(self._cb_cluster.get_master_node(), self.sample_bucket_name)
+        self.load_sample_buckets(self._cb_cluster.get_main_node(), self.sample_bucket_name)
         fts_index = self._cb_cluster.create_fts_index(name=self.sample_index_name, source_name=self.sample_bucket_name)
         self.sleep(5)
         self.fts_rest.stop_fts_index_update(fts_index.name)
@@ -50,7 +50,7 @@ class IndexManagementAPI(FTSBaseTest):
         self.validate_index_count(equal_bucket_doc_count=True)
 
     def test_planfreeze_control(self):
-        self.load_sample_buckets(self._cb_cluster.get_master_node(), self.sample_bucket_name)
+        self.load_sample_buckets(self._cb_cluster.get_main_node(), self.sample_bucket_name)
         fts_index = self._cb_cluster.create_fts_index(name=self.sample_index_name, source_name=self.sample_bucket_name)
         self.sleep(20)
         self.fts_rest.freeze_fts_index_partitions(fts_index.name)
@@ -79,7 +79,7 @@ class IndexManagementAPI(FTSBaseTest):
         self.validate_index_count(equal_bucket_doc_count=True)
 
     def test_planfreeze_control_with_2indexes(self):
-        self.load_sample_buckets(self._cb_cluster.get_master_node(), self.sample_bucket_name)
+        self.load_sample_buckets(self._cb_cluster.get_main_node(), self.sample_bucket_name)
         fts_index = self._cb_cluster.create_fts_index(name=self.sample_index_name, source_name=self.sample_bucket_name)
         fts_index2 = self._cb_cluster.create_fts_index(name=self.sample_index_name_1, source_name=self.sample_bucket_name)
         self.wait_for_indexing_complete()
@@ -90,7 +90,7 @@ class IndexManagementAPI(FTSBaseTest):
         self.validate_index_count(equal_bucket_doc_count=True)
 
     def test_query_control(self):
-        self.load_sample_buckets(self._cb_cluster.get_master_node(), self.sample_bucket_name)
+        self.load_sample_buckets(self._cb_cluster.get_main_node(), self.sample_bucket_name)
         fts_index = self._cb_cluster.create_fts_index(name=self.sample_index_name, source_name=self.sample_bucket_name)
         self.wait_for_indexing_complete()
         self.fts_rest.disable_querying_on_fts_index(fts_index.name)
@@ -137,7 +137,7 @@ class IndexManagementAPI(FTSBaseTest):
         self.run_query_and_compare(fts_index_2, n1ql_executor=self._cb_cluster)
 
     def test_index_plan_update_disallow_query(self):
-        self.load_sample_buckets(self._cb_cluster.get_master_node(), self.sample_bucket_name)
+        self.load_sample_buckets(self._cb_cluster.get_main_node(), self.sample_bucket_name)
         fts_index = self._cb_cluster.create_fts_index(name=self.sample_index_name, source_name=self.sample_bucket_name)
         self.sleep(3)
         self.fts_rest.disable_querying_on_fts_index(fts_index.name)

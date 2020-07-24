@@ -194,19 +194,19 @@ class SubdocBaseTest(BaseTestCase):
                     scheme = "couchbase"
                 else:
                     scheme = "couchbases"
-                host = self.master.ip
-                if self.master.ip == "127.0.0.1":
+                host = self.main.ip
+                if self.main.ip == "127.0.0.1":
                     if not self.is_secure:
                         scheme = "http"
                     else:
                         scheme = "https"
-                    host="{0}:{1}".format(self.master.ip, self.master.port)
+                    host="{0}:{1}".format(self.main.ip, self.main.port)
                 return SDKClient(scheme=scheme, hosts = [host], bucket = bucket.name,
                                  username=server.rest_username, password=server.rest_password)
             except ImportError:
                 self.log.info("--> Using SDK3 client")
                 from sdk_client3 import SDKClient
-                return SDKClient(RestConnection(self.master), bucket=bucket.name)
+                return SDKClient(RestConnection(self.main), bucket=bucket.name)
             except Exception as ex:
                 self.log.error("cannot load sdk client due to error {0}".format(str(ex)))
 

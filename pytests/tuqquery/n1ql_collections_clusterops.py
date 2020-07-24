@@ -10,8 +10,8 @@ class QueryCollectionsClusteropsTests(QueryTests):
         super(QueryCollectionsClusteropsTests, self).setUp()
         self.log.info("==============  QueryCollectionsClusteropsTests setup has started ==============")
         self.log_config_info()
-        self.collections_helper = CollectionsN1QL(self.master)
-        self.bucket_params = self._create_bucket_params(server=self.master, size=100, replicas=0,
+        self.collections_helper = CollectionsN1QL(self.main)
+        self.bucket_params = self._create_bucket_params(server=self.main, size=100, replicas=0,
                                                         bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy="fullEviction", lww=self.lww)

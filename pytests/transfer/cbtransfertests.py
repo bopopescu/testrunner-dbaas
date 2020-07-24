@@ -13,9 +13,9 @@ class CBTransferTests(TransferBaseTest):
     def setUp(self):
         super(CBTransferTests, self).setUp()
         self.origin_buckets = list(self.buckets)
-        self.master = self.server_recovery
-        self.add_built_in_server_user(node=self.master)
-        shell = RemoteMachineShellConnection(self.master)
+        self.main = self.server_recovery
+        self.add_built_in_server_user(node=self.main)
+        shell = RemoteMachineShellConnection(self.main)
         shell.enable_diag_eval_on_non_local_hosts()
         shell.disconnect()
         self._bucket_creation()
@@ -71,7 +71,7 @@ class CBTransferTests(TransferBaseTest):
         template = '{{ "mutated" : 0, "age": {0}, "first_name": "{1}" }}'
         gen_load = DocumentGenerator('cbtransfer', template, list(range(5)), ['james', 'john'], start=0, end=self.num_items)
         client = MemcachedClient(self.server_origin.ip,
-                                 int(bucket.vbuckets[0].master.split(':')[1]))
+                                 int(bucket.vbuckets[0].main.split(':')[1]))
         kv_value_dict = {}
         vb_id_to_check = bucket.vbuckets[-1].id
         for vb_id in range(len(bucket.vbuckets)):
@@ -89,7 +89,7 @@ class CBTransferTests(TransferBaseTest):
         output = self.shell.execute_cbtransfer(transfer_source, transfer_destination,
                                       "-b %s -B %s -i %s" % (bucket.name, bucket.name, vb_id_to_check))
         client = MemcachedClient(self.server_recovery.ip,
-                                 int(bucket.vbuckets[0].master.split(':')[1]))
+                                 int(bucket.vbuckets[0].main.split(':')[1]))
         for key, value in kv_value_dict.items():
             _, _, d = client.get(key, vbucket=vb_id_to_check)
             self.assertEqual(d, value, 'Key: %s expected. Value expected %s. Value actual %s' % (

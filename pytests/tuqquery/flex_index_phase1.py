@@ -16,7 +16,7 @@ class FlexIndexTests(QueryTests):
 
     def init_flex_object(self, test_object):
         self.log = test_object.log
-        self.master = test_object.master
+        self.main = test_object.main
         self.input = test_object.input
         self.buckets = test_object.buckets
         self.testrunner_client = test_object.testrunner_client
@@ -593,8 +593,8 @@ class FlexIndexTests(QueryTests):
         password = self.users[user]['password']
         query = "select meta().id from `beer-sample` use index (using fts, using gsi) where state = \"California\""
 
-        master_result = self.run_cbq_query(query=query, server=self.master, username=username, password=password)
-        self.assertEquals(master_result['status'], 'success', username+" query run failed on non-fts node")
+        main_result = self.run_cbq_query(query=query, server=self.main, username=username, password=password)
+        self.assertEquals(main_result['status'], 'success', username+" query run failed on non-fts node")
 
         self.cbcluster.delete_all_fts_indexes()
 
@@ -613,7 +613,7 @@ class FlexIndexTests(QueryTests):
         query = "select meta().id from `beer-sample` use index (using fts, using gsi) where state = \"California\""
 
         try:
-            self.run_cbq_query(query=query, server=self.master, username=username, password=password)
+            self.run_cbq_query(query=query, server=self.main, username=username, password=password)
             self.fail("Could able to run query without n1ql permissions")
         except CBQError as e:
             self.log.info(str(e))

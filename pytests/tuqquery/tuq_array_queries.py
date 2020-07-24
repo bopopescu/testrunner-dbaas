@@ -179,8 +179,8 @@ class QueryArrayQueryTests(QueryTests):
         total_failed_queries = 0
         failed_queries = []
 
-        #shell = RemoteMachineShellConnection(self.master)
-        cmd = "fakeit couchbase --server http://%s:%s --bucket default --count %s --username Administrator --password password --verbose resources/yaml/links.yaml" % (self.master.ip, self.master.port, self.doc_count)
+        #shell = RemoteMachineShellConnection(self.main)
+        cmd = "fakeit couchbase --server http://%s:%s --bucket default --count %s --username Administrator --password password --verbose resources/yaml/links.yaml" % (self.main.ip, self.main.port, self.doc_count)
         #output, error = shell.execute_command(cmd)
         os.system(cmd)
 

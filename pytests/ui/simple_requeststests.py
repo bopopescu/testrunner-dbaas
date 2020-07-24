@@ -10,7 +10,7 @@ class SimpleRequests(BaseTestCase):
     def setUp(self):
         super(SimpleRequests, self).setUp()
         if not self.skip_host_login:
-            shell = RemoteMachineShellConnection(self.master)
+            shell = RemoteMachineShellConnection(self.main)
             type = shell.extract_remote_info().distribution_type
             shell.disconnect()
             self.is_linux = False
@@ -21,7 +21,7 @@ class SimpleRequests(BaseTestCase):
             self.is_linux = True
 
     def test_simple_ui_request(self):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         self.log.info("-->Testing APIs...")
         passed = True
         all_apis = ["", "versions", "pools", "pools/default", "pools/nodes",

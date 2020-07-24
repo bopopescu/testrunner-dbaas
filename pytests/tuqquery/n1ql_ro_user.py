@@ -11,8 +11,8 @@ class ReadOnlyUserTests(QuerySanityTests, QueryTests):
         output, error = self.shell.execute_couchbase_cli(cli_command=cli_cmd,
                                                          options=' --set --ro-username=%s'
                                                                  ' --ro-password=%s ' % (self.username, self.password),
-                                                         cluster_host=self.master.ip, user=self.master.rest_username,
-                                                         password=self.master.rest_password)
+                                                         cluster_host=self.main.ip, user=self.main.rest_username,
+                                                         password=self.main.rest_password)
         self.log.info(output)
         self.log.error(error)
         self.query_buckets = self.get_query_buckets(check_all_buckets=True)
@@ -29,13 +29,13 @@ class ReadOnlyUserTests(QuerySanityTests, QueryTests):
 
     def test_select(self):
         self._kill_all_processes_cbq()
-        self._start_command_line_query(self.master, user=self.username, password=self.password)
+        self._start_command_line_query(self.main, user=self.username, password=self.password)
         method_name = self.input.param('to_run', 'test_any')
         getattr(self, method_name)()
 
     def test_select_indx(self):
         self._kill_all_processes_cbq()
-        self._start_command_line_query(self.master, user=self.username, password=self.password)
+        self._start_command_line_query(self.main, user=self.username, password=self.password)
         for query_bucket in self.query_buckets:
             index_name = "my_index"
             try:
@@ -49,7 +49,7 @@ class ReadOnlyUserTests(QuerySanityTests, QueryTests):
 
     def test_readonly(self):
         self._kill_all_processes_cbq()
-        self._start_command_line_query(self.master, user=self.username, password=self.password)
+        self._start_command_line_query(self.main, user=self.username, password=self.password)
         for query_bucket in self.query_buckets:
             self.analytics = False
             self.query = 'INSERT into %s (key, value) VALUES ("%s", %s)' % (query_bucket, 'key1', 1)

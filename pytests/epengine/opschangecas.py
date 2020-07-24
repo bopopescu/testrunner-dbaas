@@ -24,7 +24,7 @@ class OpsChangeCasTests(BucketConfig):
         self.item_flag = self.input.param("item_flag", 0)
         self.value_size = self.input.param("value_size", 256)
         self.items = self.input.param("items", 20)
-        self.rest = RestConnection(self.master)
+        self.rest = RestConnection(self.main)
         self.client = VBucketAwareMemcached(self.rest, self.bucket)
 
     def tearDown(self):
@@ -33,7 +33,7 @@ class OpsChangeCasTests(BucketConfig):
     def check_rebalance_complete(self):
         for i in range(0, 6):
             try:
-                shell = RemoteMachineShellConnection(self.master)
+                shell = RemoteMachineShellConnection(self.main)
                 break
             except:
                 self.log.info("Unable to connect to the host. "
@@ -44,7 +44,7 @@ class OpsChangeCasTests(BucketConfig):
     def test_meta_rebalance_out(self):
         KEY_NAME = 'key1'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, self.bucket)
 
         for i in range(10):
@@ -54,7 +54,7 @@ class OpsChangeCasTests(BucketConfig):
             vbucket_id = client._get_vBucket_id(KEY_NAME)
             #print 'vbucket_id is {0}'.format(vbucket_id)
             mc_active = client.memcached(KEY_NAME)
-            mc_master = client.memcached_for_vbucket(vbucket_id )
+            mc_main = client.memcached_for_vbucket(vbucket_id )
             mc_replica = client.memcached_for_replica_vbucket(vbucket_id)
 
             cas_active = mc_active.getMeta(KEY_NAME)[4]
@@ -67,7 +67,7 @@ class OpsChangeCasTests(BucketConfig):
         # remove that node
         self.log.info('Remove the node with active data')
 
-        rebalance = self.cluster.async_rebalance(self.servers[-1:], [], [self.master])
+        rebalance = self.cluster.async_rebalance(self.servers[-1:], [], [self.main])
 
         rebalance.result()
         replica_CAS = mc_replica.getMeta(KEY_NAME)[4]
@@ -77,7 +77,7 @@ class OpsChangeCasTests(BucketConfig):
 
         # add the node back
         self.log.info('Add the node back, the max_cas should be healed')
-        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.master], [])
+        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.main], [])
 
         rebalance.result()
 
@@ -93,7 +93,7 @@ class OpsChangeCasTests(BucketConfig):
     def test_meta_failover(self):
         KEY_NAME = 'key2'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, self.bucket)
 
         for i in range(10):
@@ -103,7 +103,7 @@ class OpsChangeCasTests(BucketConfig):
             vbucket_id = client._get_vBucket_id(KEY_NAME)
             #print 'vbucket_id is {0}'.format(vbucket_id)
             mc_active = client.memcached(KEY_NAME)
-            mc_master = client.memcached_for_vbucket( vbucket_id )
+            mc_main = client.memcached_for_vbucket( vbucket_id )
             mc_replica = client.memcached_for_replica_vbucket(vbucket_id)
 
             cas_active = mc_active.getMeta(KEY_NAME)[4]
@@ -114,12 +114,12 @@ class OpsChangeCasTests(BucketConfig):
         self.assertTrue(cas_active == max_cas, '[ERROR]Max cas  is not 0 it is {0}'.format(cas_active))
 
         # failover that node
-        self.log.info('Failing over node with active data {0}'.format(self.master))
-        self.cluster.failover(self.servers, [self.master])
+        self.log.info('Failing over node with active data {0}'.format(self.main))
+        self.cluster.failover(self.servers, [self.main])
 
-        self.log.info('Remove the node with active data {0}'.format(self.master))
+        self.log.info('Remove the node with active data {0}'.format(self.main))
 
-        rebalance = self.cluster.async_rebalance(self.servers[:], [], [self.master])
+        rebalance = self.cluster.async_rebalance(self.servers[:], [], [self.main])
 
         rebalance.result()
         self.check_rebalance_complete()
@@ -129,7 +129,7 @@ class OpsChangeCasTests(BucketConfig):
 
         # add the node back
         self.log.info('Add the node back, the max_cas should be healed')
-        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.master], [])
+        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.main], [])
 
         rebalance.result()
 
@@ -149,7 +149,7 @@ class OpsChangeCasTests(BucketConfig):
     def test_meta_soft_restart(self):
         KEY_NAME = 'key2'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, self.bucket)
 
         for i in range(10):
@@ -159,7 +159,7 @@ class OpsChangeCasTests(BucketConfig):
             vbucket_id = client._get_vBucket_id(KEY_NAME)
             #print 'vbucket_id is {0}'.format(vbucket_id)
             mc_active = client.memcached(KEY_NAME)
-            mc_master = client.memcached_for_vbucket( vbucket_id )
+            mc_main = client.memcached_for_vbucket( vbucket_id )
             mc_replica = client.memcached_for_replica_vbucket(vbucket_id)
 
             cas_pre = mc_active.getMeta(KEY_NAME)[4]
@@ -188,7 +188,7 @@ class OpsChangeCasTests(BucketConfig):
     def test_meta_hard_restart(self):
         KEY_NAME = 'key2'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, self.bucket)
 
         for i in range(10):
@@ -198,7 +198,7 @@ class OpsChangeCasTests(BucketConfig):
             vbucket_id = client._get_vBucket_id(KEY_NAME)
             #print 'vbucket_id is {0}'.format(vbucket_id)
             mc_active = client.memcached(KEY_NAME)
-            mc_master = client.memcached_for_vbucket( vbucket_id )
+            mc_main = client.memcached_for_vbucket( vbucket_id )
             mc_replica = client.memcached_for_replica_vbucket(vbucket_id)
 
             cas_pre = mc_active.getMeta(KEY_NAME)[4]
@@ -308,7 +308,7 @@ class OpsChangeCasTests(BucketConfig):
             self.log.info('For key {0} the vbucket is {1}'.format( key, vbucket_id ))
             #print 'vbucket_id is {0}'.format(vbucket_id)
             mc_active = self.client.memcached(key)
-            mc_master = self.client.memcached_for_vbucket( vbucket_id )
+            mc_main = self.client.memcached_for_vbucket( vbucket_id )
             #mc_replica = self.client.memcached_for_replica_vbucket(vbucket_id)
 
             TEST_SEQNO = 123
@@ -376,7 +376,7 @@ class OpsChangeCasTests(BucketConfig):
             vbucket_id = self.client._get_vBucket_id(key)
             #print 'vbucket_id is {0}'.format(vbucket_id)
             mc_active = self.client.memcached(key)
-            mc_master = self.client.memcached_for_vbucket( vbucket_id )
+            mc_main = self.client.memcached_for_vbucket( vbucket_id )
             #mc_replica = self.client.memcached_for_replica_vbucket(vbucket_id)
             get_meta_1 = mc_active.getMeta(key, request_extended_meta_data=False)
             #print 'cr {0}'.format(get_meta_1)
@@ -443,7 +443,7 @@ class OpsChangeCasTests(BucketConfig):
 
             vbucket_id = self.client._get_vBucket_id(key)
             mc_active = self.client.memcached(key)
-            mc_master = self.client.memcached_for_vbucket( vbucket_id )
+            mc_main = self.client.memcached_for_vbucket( vbucket_id )
             mc_replica = self.client.memcached_for_replica_vbucket(vbucket_id)
 
             TEST_SEQNO = 123
@@ -518,7 +518,7 @@ class OpsChangeCasTests(BucketConfig):
 
             vbucket_id = self.client._get_vBucket_id(key)
             mc_active = self.client.memcached(key)
-            mc_master = self.client.memcached_for_vbucket( vbucket_id )
+            mc_main = self.client.memcached_for_vbucket( vbucket_id )
             mc_replica = self.client.memcached_for_replica_vbucket(vbucket_id)
 
             low_seq=12
@@ -564,7 +564,7 @@ class OpsChangeCasTests(BucketConfig):
 
             vbucket_id = self.client._get_vBucket_id(key)
             mc_active = self.client.memcached(key)
-            mc_master = self.client.memcached_for_vbucket( vbucket_id )
+            mc_main = self.client.memcached_for_vbucket( vbucket_id )
             mc_replica = self.client.memcached_for_replica_vbucket(vbucket_id)
 
             new_seq=121
@@ -609,7 +609,7 @@ class OpsChangeCasTests(BucketConfig):
 
             vbucket_id = self.client._get_vBucket_id(key)
             mc_active = self.client.memcached(key)
-            mc_master = self.client.memcached_for_vbucket( vbucket_id )
+            mc_main = self.client.memcached_for_vbucket( vbucket_id )
             mc_replica = self.client.memcached_for_replica_vbucket(vbucket_id)
 
             new_seq=121
@@ -645,7 +645,7 @@ class OpsChangeCasTests(BucketConfig):
         self.log.info(' Starting test_restart_revid_conflict_resolution ..')
         self._load_ops(ops='set', mutations=20)
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, self.bucket)
 
         k=0
@@ -654,7 +654,7 @@ class OpsChangeCasTests(BucketConfig):
 
         vbucket_id = self.client._get_vBucket_id(key)
         mc_active = self.client.memcached(key)
-        mc_master = self.client.memcached_for_vbucket( vbucket_id )
+        mc_main = self.client.memcached_for_vbucket( vbucket_id )
         mc_replica = self.client.memcached_for_replica_vbucket(vbucket_id)
 
 
@@ -664,7 +664,7 @@ class OpsChangeCasTests(BucketConfig):
         vbucket_id = client._get_vBucket_id(key)
         #print 'vbucket_id is {0}'.format(vbucket_id)
         mc_active = client.memcached(key)
-        mc_master = client.memcached_for_vbucket( vbucket_id )
+        mc_main = client.memcached_for_vbucket( vbucket_id )
         mc_replica = client.memcached_for_replica_vbucket(vbucket_id)
 
         new_seq=121
@@ -721,7 +721,7 @@ class OpsChangeCasTests(BucketConfig):
         self._load_ops(ops='set', mutations=20)
         key = 'key1'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, self.bucket)
 
         value = 'value'
@@ -729,7 +729,7 @@ class OpsChangeCasTests(BucketConfig):
         vbucket_id = client._get_vBucket_id(key)
         #print 'vbucket_id is {0}'.format(vbucket_id)
         mc_active = client.memcached(key)
-        mc_master = client.memcached_for_vbucket( vbucket_id )
+        mc_main = client.memcached_for_vbucket( vbucket_id )
         mc_replica = client.memcached_for_replica_vbucket(vbucket_id)
 
         new_seq=121
@@ -762,7 +762,7 @@ class OpsChangeCasTests(BucketConfig):
         # remove that node
         self.log.info('Remove the node with active data')
 
-        rebalance = self.cluster.async_rebalance(self.servers[-1:], [], [self.master])
+        rebalance = self.cluster.async_rebalance(self.servers[-1:], [], [self.main])
         rebalance.result()
         self.check_rebalance_complete()
         replica_CAS = mc_replica.getMeta(key)[4]
@@ -772,7 +772,7 @@ class OpsChangeCasTests(BucketConfig):
 
         # add the node back
         self.log.info('Add the node back, the max_cas should be healed')
-        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.master], [])
+        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.main], [])
 
         rebalance.result()
 
@@ -793,7 +793,7 @@ class OpsChangeCasTests(BucketConfig):
         self._load_ops(ops='set', mutations=20)
         key = 'key1'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, self.bucket)
 
         value = 'value'
@@ -801,7 +801,7 @@ class OpsChangeCasTests(BucketConfig):
         vbucket_id = client._get_vBucket_id(key)
         #print 'vbucket_id is {0}'.format(vbucket_id)
         mc_active = client.memcached(key)
-        mc_master = client.memcached_for_vbucket( vbucket_id )
+        mc_main = client.memcached_for_vbucket( vbucket_id )
         mc_replica = client.memcached_for_replica_vbucket(vbucket_id)
 
         new_seq=121
@@ -831,12 +831,12 @@ class OpsChangeCasTests(BucketConfig):
         self.assertTrue(pre_seq < post_seq, '[ERROR]Pre rev id {0} is not greater than post rev id {1}'.format(pre_seq, post_seq))
 
         # failover that node
-        self.log.info('Failing over node with active data {0}'.format(self.master))
-        self.cluster.failover(self.servers, [self.master])
+        self.log.info('Failing over node with active data {0}'.format(self.main))
+        self.cluster.failover(self.servers, [self.main])
 
-        self.log.info('Remove the node with active data {0}'.format(self.master))
+        self.log.info('Remove the node with active data {0}'.format(self.main))
 
-        rebalance = self.cluster.async_rebalance(self.servers[:], [], [self.master])
+        rebalance = self.cluster.async_rebalance(self.servers[:], [], [self.main])
 
         rebalance.result()
         self.check_rebalance_complete()
@@ -847,7 +847,7 @@ class OpsChangeCasTests(BucketConfig):
 
         # add the node back
         self.log.info('Add the node back, the max_cas should be healed')
-        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.master], [])
+        rebalance = self.cluster.async_rebalance(self.servers[-1:], [self.main], [])
 
         rebalance.result()
 
@@ -904,14 +904,14 @@ class OpsChangeCasTests(BucketConfig):
         self._load_ops(ops='set', mutations=20)
 
         '''Do the backup on the bucket '''
-        self.shell = RemoteMachineShellConnection(self.master)
-        self.buckets = RestConnection(self.master).get_buckets()
+        self.shell = RemoteMachineShellConnection(self.main)
+        self.buckets = RestConnection(self.main).get_buckets()
         self.couchbase_login_info = "%s:%s" % (self.input.membase_settings.rest_username,
                                                self.input.membase_settings.rest_password)
         self.backup_location = "/tmp/backup"
         self.command_options = self.input.param("command_options", '')
         try:
-            shell = RemoteMachineShellConnection(self.master)
+            shell = RemoteMachineShellConnection(self.main)
             self.shell.execute_cluster_backup(self.couchbase_login_info, self.backup_location, self.command_options)
 
             time.sleep(5)
@@ -922,11 +922,11 @@ class OpsChangeCasTests(BucketConfig):
 
     ''' Common function to verify the expected values on cas
     '''
-    def _check_cas(self, check_conflict_resolution=False, master=None, bucket=None, time_sync=None):
+    def _check_cas(self, check_conflict_resolution=False, main=None, bucket=None, time_sync=None):
         self.log.info(' Verifying cas and max cas for the keys')
         #select_count = 20 #Verifying top 20 keys
-        if master:
-            self.rest = RestConnection(master)
+        if main:
+            self.rest = RestConnection(main)
             self.client = VBucketAwareMemcached(self.rest, bucket)
 
         k=0
@@ -950,10 +950,10 @@ class OpsChangeCasTests(BucketConfig):
 
     ''' Common function to add set delete etc operations on the bucket
     '''
-    def _load_ops(self, ops=None, mutations=1, master=None, bucket=None):
+    def _load_ops(self, ops=None, mutations=1, main=None, bucket=None):
 
-        if master:
-            self.rest = RestConnection(master)
+        if main:
+            self.rest = RestConnection(main)
         if bucket:
             self.client = VBucketAwareMemcached(self.rest, bucket)
 

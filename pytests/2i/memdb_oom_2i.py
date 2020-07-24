@@ -211,7 +211,7 @@ class SecondaryIndexMemdbOomTests(BaseSecondaryIndexingTests):
         self.assertTrue(self._push_indexer_off_the_cliff(), "OOM Can't be achieved")
         kv_nodes = self.get_nodes_from_services_map(service_type="kv", get_all_nodes=True)
         kv_node_to_rebalance = kv_nodes[0]
-        self.master = kv_nodes[1]
+        self.main = kv_nodes[1]
         self.log.info("Rebalancing KV node {ip} out...".format(ip=kv_node_to_rebalance.ip))
         rebalance = self.cluster.async_rebalance(self.servers, [], [kv_node_to_rebalance])
         rebalance.result()

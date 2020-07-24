@@ -1743,7 +1743,7 @@ class RemoteMachineShellConnection(KeepRefs):
         self.wait_for_couchbase_started(num_retries=num_retries, poll_interval=poll_interval,
                                         message="wait for cb server start completely after reset vbuckets!")
 
-        """ remove temporary files on slave """
+        """ remove temporary files on subordinate """
         os.remove(local_file)
         os.remove(des_file)
 
@@ -1794,7 +1794,7 @@ class RemoteMachineShellConnection(KeepRefs):
         self.wait_for_couchbase_started(num_retries=num_retries, poll_interval=poll_interval,
                                         message="wait for cb server start completely after setting CBFT_ENV_OPTIONS")
 
-        """ remove temporary files on slave """
+        """ remove temporary files on subordinate """
         os.remove(local_file)
         os.remove(des_file)
 
@@ -2721,7 +2721,7 @@ class RemoteMachineShellConnection(KeepRefs):
                     output, error = self.execute_command("rm -f \
                                /cygdrive/c/automation/{0}".format(capture_iss_file))
                     self.log_command_output(output, error)
-                    log.info("Delete {0} in slave resources/windows/automation dir" \
+                    log.info("Delete {0} in subordinate resources/windows/automation dir" \
                              .format(capture_iss_file))
                     os.system("rm -f resources/windows/automation/{0}" \
                                                           .format(capture_iss_file))
@@ -5055,7 +5055,7 @@ class RemoteMachineShellConnection(KeepRefs):
         if internal_IP is None:
             raise Exception("Need internal IP to add node.")
         if main_server is None:
-            raise Exception("Need master IP to run")
+            raise Exception("Need main IP to run")
         cmd = 'curl{0} -X POST -d  "hostname={1}&user={2}&password={3}&services={4}" '\
                              .format(cmd_ext, internal_IP, server_add.rest_username,
                                      server_add.rest_password, services)

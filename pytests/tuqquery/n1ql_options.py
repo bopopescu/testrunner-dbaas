@@ -25,7 +25,7 @@ class OptionsTests(QueryTests):
 
     def test_metrics(self):
         self.shell.execute_command("killall cbq-engine")
-        self._start_command_line_query(self.master, options='-metrics=false')
+        self._start_command_line_query(self.main, options='-metrics=false')
         for query_bucket in self.query_buckets:
             self.query = "SELECT name, CASE WHEN join_mo < 3 OR join_mo > 11 THEN" + \
                          " 'winter' ELSE 'other' END AS period FROM %s WHERE CASE WHEN" % query_bucket + \
@@ -35,14 +35,14 @@ class OptionsTests(QueryTests):
 
     def test_readonly(self):
         self.shell.execute_command("killall cbq-engine")
-        self._start_command_line_query(self.master, options='-readonly=true')
+        self._start_command_line_query(self.main, options='-readonly=true')
         for query_bucket in self.query_buckets:
             self.query = 'INSERT into %s (key, value) VALUES ("%s", %s)' % (query_bucket, 'key1', 'value')
             self.run_cbq_query()
 
     def test_namespace(self):
         self.shell.execute_command("killall cbq-engine")
-        self._start_command_line_query(self.master, options='-namespace=default')
+        self._start_command_line_query(self.main, options='-namespace=default')
         for query_bucket in self.query_buckets:
             self.query = "SELECT count(name) FROM %s" % query_bucket
             actual_result = self.run_cbq_query()
@@ -50,7 +50,7 @@ class OptionsTests(QueryTests):
 
     def test_signature(self):
         self.shell.execute_command("killall cbq-engine")
-        self._start_command_line_query(self.master, options='-signature=false')
+        self._start_command_line_query(self.main, options='-signature=false')
         for query_bucket in self.query_buckets:
             self.query = "SELECT name, CASE WHEN join_mo < 3 OR join_mo > 11 THEN" + \
                          " 'winter' ELSE 'other' END AS period FROM %s WHERE CASE WHEN" % query_bucket + \
@@ -60,7 +60,7 @@ class OptionsTests(QueryTests):
 
     def test_timeout(self):
         self.shell.execute_command("killall cbq-engine")
-        self._start_command_line_query(self.master, options='-timeout=1ms')
+        self._start_command_line_query(self.main, options='-timeout=1ms')
         for query_bucket in self.query_buckets:
             self.query = "SELECT count(name) FROM %s" % query_bucket
             try:
@@ -74,7 +74,7 @@ class OptionsTests(QueryTests):
     def test_http(self):
         self.shell.execute_command("killall cbq-engine")
         self.n1ql_port = 8094
-        self._start_command_line_query(self.master, options='-http=:%s' % self.n1ql_port)
+        self._start_command_line_query(self.main, options='-http=:%s' % self.n1ql_port)
         for query_bucket in self.query_buckets:
             self.query = "SELECT count(name) FROM %s" % query_bucket
             actual_result = self.run_cbq_query()

@@ -97,7 +97,7 @@ class BreakpadVerifyDumpTests(BreakpadBase):
         nodeA = self.servers[index]
         pollers = []
         self.cluster.rebalance(
-            [self.master],
+            [self.main],
             self.servers[1:], [])
 
         self.load_docs(nodeA, 10000)
@@ -149,7 +149,7 @@ class BreakpadVerifyDumpTests(BreakpadBase):
 
         # rebalance async
         task = self.cluster.async_rebalance(
-            [self.master],
+            [self.main],
             self.servers[1:], [])
 
         # did start rebalance

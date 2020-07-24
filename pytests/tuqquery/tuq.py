@@ -71,10 +71,10 @@ class QueryTests(BaseTestCase):
             if self.input.tuq_client and "client" in self.input.tuq_client:
                 self.shell = RemoteMachineShellConnection(self.input.tuq_client["client"])
             else:
-                self.shell = RemoteMachineShellConnection(self.master)
+                self.shell = RemoteMachineShellConnection(self.main)
         if self.input.param("start_cmd", True) and self.input.param("cbq_version", "sherlock") != 'sherlock':
-            self._start_command_line_query(self.master, user=self.master.rest_username,
-                                           password=self.master.rest_password)
+            self._start_command_line_query(self.main, user=self.main.rest_username,
+                                           password=self.main.rest_password)
         self.query_buckets = None
         self.test_buckets = self.input.param('test_buckets', 'default')
         if (self.test_buckets == "default") & (self.default_bucket == False) :
@@ -86,7 +86,7 @@ class QueryTests(BaseTestCase):
         self.use_rest = self.input.param("use_rest", True)
         self.hint_index = self.input.param("hint", None)
         self.max_verify = self.input.param("max_verify", None)
-        self.buckets = RestConnection(self.master).get_buckets()
+        self.buckets = RestConnection(self.main).get_buckets()
         self.docs_per_day = self.input.param("doc-per-day", 49)
         self.item_flag = self.input.param("item_flag", 4042322160)
         self.ipv6 = self.input.param("ipv6", False)
@@ -115,7 +115,7 @@ class QueryTests(BaseTestCase):
         self.scan_consistency = self.input.param("scan_consistency", 'REQUEST_PLUS')
         type = "linux"
         if not self.skip_host_login:
-            shell = RemoteMachineShellConnection(self.master)
+            shell = RemoteMachineShellConnection(self.main)
             type = shell.extract_remote_info().distribution_type
             shell.disconnect()
         self.path = testconstants.LINUX_COUCHBASE_BIN_PATH
@@ -129,7 +129,7 @@ class QueryTests(BaseTestCase):
         self.DGM = self.input.param("DGM", False)
         self.covering_index = self.input.param("covering_index", False)
         self.cluster_ops = self.input.param("cluster_ops", False)
-        self.server = self.master
+        self.server = self.main
         self.log.info("-->starting rest connection...")
         self.rest = RestConnection(self.server)
         self.username = self.rest.username
@@ -148,13 +148,13 @@ class QueryTests(BaseTestCase):
         if self.input.param("reload_data", False):
             self.log.info("--> reload_data: false")
             if self.analytics:
-                self.cluster.rebalance([self.master, self.cbas_node], [], [self.cbas_node], services=['cbas'])
+                self.cluster.rebalance([self.main, self.cbas_node], [], [self.cbas_node], services=['cbas'])
             for bucket in self.buckets:
-                self.cluster.bucket_flush(self.master, bucket=bucket, timeout=180000)
+                self.cluster.bucket_flush(self.main, bucket=bucket, timeout=180000)
             self.gens_load = self.gen_docs(self.docs_per_day)
             self.load(self.gens_load, batch_size=1000, flag=self.item_flag)
             if self.analytics:
-                self.cluster.rebalance([self.master, self.cbas_node], [self.cbas_node], [], services=['cbas'])
+                self.cluster.rebalance([self.main, self.cbas_node], [self.cbas_node], [], services=['cbas'])
         if not (hasattr(self, 'skip_generation') and self.skip_generation):
             self.full_list = self.generate_full_docs_list(self.gens_load)
         if self.input.param("gomaxprocs", None):
@@ -208,10 +208,10 @@ class QueryTests(BaseTestCase):
                     self.log.info("-->gens_load flat_json, batch_size=1000")
                     self.load(self.gens_load, batch_size=1000, flag=self.item_flag)
             if not self.input.param("skip_build_tuq", True):
-                self._build_tuq(self.master)
+                self._build_tuq(self.main)
             self.skip_buckets_handle = True
             if self.analytics:
-                self.cluster.rebalance([self.master, self.cbas_node], [self.cbas_node], [], services=['cbas'])
+                self.cluster.rebalance([self.main, self.cbas_node], [self.cbas_node], [], services=['cbas'])
                 self.setup_analytics()
                 # self.sleep(30, 'wait for analytics setup')
             if self.testrunner_client == 'python_sdk':
@@ -318,7 +318,7 @@ class QueryTests(BaseTestCase):
     def _load_emp_dataset(self, op_type="create", expiration=0, start=0,
                           end=1000):
         # Load Emp Dataset
-        self.cluster.bucket_flush(self.master)
+        self.cluster.bucket_flush(self.main)
 
         if end > 0:
             self._kv_gen = JsonDocGenerator("emp_",
@@ -333,7 +333,7 @@ class QueryTests(BaseTestCase):
     def _load_napa_dataset(self, op_type="create", expiration=0, start=0,
                           end=1000):
         # Load Emp Dataset
-        self.cluster.bucket_flush(self.master)
+        self.cluster.bucket_flush(self.main)
 
         if end > 0:
             self._kv_gen = NapaDataLoader("napa_",
@@ -348,7 +348,7 @@ class QueryTests(BaseTestCase):
     def _load_wiki_dataset(self, op_type="create", expiration=0, start=0,
                            end=1000):
         # Load Emp Dataset
-        # self.cluster.bucket_flush(self.master)
+        # self.cluster.bucket_flush(self.main)
 
         if end > 0:
             self._kv_gen = WikiJSONGenerator("wiki_",
@@ -497,8 +497,8 @@ class QueryTests(BaseTestCase):
                 rolelist = user_info['rolelist']
                 break
         if user_to_create and rolelist:
-            RbacBase().create_user_source(user_to_create, 'builtin', self.master)
-            RbacBase().add_user_role(rolelist, RestConnection(self.master), 'builtin')
+            RbacBase().create_user_source(user_to_create, 'builtin', self.main)
+            RbacBase().add_user_role(rolelist, RestConnection(self.main), 'builtin')
             self.users[user] = {'username': user, 'password': 'password'}
         else:
             self.fail("{0} looks like an invalid user".format(user))
@@ -646,13 +646,13 @@ class QueryTests(BaseTestCase):
         """
         if not users:
             users = self.users
-        RbacBase().create_user_source(users, 'builtin', self.master)
+        RbacBase().create_user_source(users, 'builtin', self.main)
         self.log.info("SUCCESS: User(s) %s created"
                       % ','.join([user['name'] for user in users]))
 
     def assign_role(self, rest=None, roles=None):
         if not rest:
-            rest = RestConnection(self.master)
+            rest = RestConnection(self.main)
         # Assign roles to users
         if not roles:
             roles = self.roles
@@ -663,7 +663,7 @@ class QueryTests(BaseTestCase):
 
     def does_test_meet_server_version(self, required_major_version=-1, required_minor_version1=-1,
                                       required_minor_version2=-1):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         versions = rest.get_nodes_versions()
         server_version = versions[0].split('-')[0]
         server_version_major = int(server_version.split(".")[0])
@@ -1132,7 +1132,7 @@ class QueryTests(BaseTestCase):
 
     def buckets_docs_ready(self, bucket_docs_map):
         ready = True
-        rest_conn = RestConnection(self.master)
+        rest_conn = RestConnection(self.main)
         bucket_docs_rest = rest_conn.get_buckets_itemCount()
         for bucket in list(bucket_docs_map.keys()):
             query_response = self.run_cbq_query("SELECT COUNT(*) FROM `" + bucket + "`")
@@ -1145,7 +1145,7 @@ class QueryTests(BaseTestCase):
 
     def buckets_status_ready(self, bucket_status_map):
         ready = True
-        rest_conn = RestConnection(self.master)
+        rest_conn = RestConnection(self.main)
         for bucket in list(bucket_status_map.keys()):
             status = rest_conn.get_bucket_status(bucket)
             if status != bucket_status_map[bucket]:
@@ -1225,13 +1225,13 @@ class QueryTests(BaseTestCase):
         return None
 
     def delete_bucket(self, bucket):
-        self.cluster.bucket_delete(self.master, bucket=bucket, timeout=180000)
+        self.cluster.bucket_delete(self.main, bucket=bucket, timeout=180000)
 
     def ensure_bucket_does_not_exist(self, bucket_name, using_rest=False):
         bucket = self.get_bucket_from_name(bucket_name)
         if bucket:
             if using_rest:
-                rest = RestConnection(self.master)
+                rest = RestConnection(self.main)
                 rest.delete_bucket(bucket_name)
             else:
                 self.delete_bucket(bucket)
@@ -1274,11 +1274,11 @@ class QueryTests(BaseTestCase):
         if query is None:
             query = self.query
         if server is None:
-            server = self.master
+            server = self.main
 
         shell = RemoteMachineShellConnection(server)
         cmd = (
-                self.curl_path + " -u " + self.master.rest_username + ":" + self.master.rest_password
+                self.curl_path + " -u " + self.main.rest_username + ":" + self.main.rest_password
                 + self.http_protocol + " ://" + server.ip + ":" + server.n1ql_port +
         "/query/service -d " \
                                                                                                                                                           "statement=" + query)
@@ -1293,7 +1293,7 @@ class QueryTests(BaseTestCase):
         if query is None:
             query = self.query
         if server is None:
-            server = self.master
+            server = self.main
             if self.input.tuq_client and "client" in self.input.tuq_client:
                 server = self.tuq_client
         cred_params = {'creds': []}
@@ -1485,7 +1485,7 @@ class QueryTests(BaseTestCase):
         elif self.version == "sherlock":
             if self.services_init and self.services_init.find('n1ql') != -1:
                 return
-            if self.master.services and self.master.services.find('n1ql') != -1:
+            if self.main.services and self.main.services.find('n1ql') != -1:
                 return
             if os == 'windows':
                 couchbase_path = testconstants.WIN_COUCHBASE_BIN_PATH
@@ -1612,7 +1612,7 @@ class QueryTests(BaseTestCase):
         max_proc = self.input.param("gomaxprocs", None)
         cmd = "export GOMAXPROCS=%s" % max_proc
         for server in self.servers:
-            shell_connection = RemoteMachineShellConnection(self.master)
+            shell_connection = RemoteMachineShellConnection(self.main)
             shell_connection.execute_command(cmd)
 
     def load_directory(self, generators_load):
@@ -1626,7 +1626,7 @@ class QueryTests(BaseTestCase):
         self.fail_if_no_buckets()
         for bucket in self.buckets:
             try:
-                shell = RemoteMachineShellConnection(self.master)
+                shell = RemoteMachineShellConnection(self.main)
                 self.log.info(
                     "Delete directory's content %sdata/default/%s ..." % (self.directory_flat_json, bucket.name))
                 o = shell.execute_command('rm -rf %sdata/default/*' % self.directory_flat_json)
@@ -1708,9 +1708,9 @@ class QueryTests(BaseTestCase):
 
     def _debug_fts_request(self, request=""):
         cmd = "curl -XPOST -H \"Content-Type: application/json\" -u " + self.username + ":" + self.password + " " \
-                                                                                                              "http://" + self.master.ip + ":8094/api/index/idx_beer_sample_fts/query -d " + request
+                                                                                                              "http://" + self.main.ip + ":8094/api/index/idx_beer_sample_fts/query -d " + request
 
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
 
         output, error = shell.execute_command(cmd)
         json_output_str = ''
@@ -1939,7 +1939,7 @@ class QueryTests(BaseTestCase):
         for bucket in self.buckets:
             cmd = "%s -u %s:%s %s://%s:%s/query/service -d " \
                   "'statement=INSERT INTO %s (KEY, VALUE) VALUES(\"test\", { \"value1\": \"one1\" })'" % \
-                  (self.curl_path, 'john_insert', 'password', self.http_protocol, self.master.ip,
+                  (self.curl_path, 'john_insert', 'password', self.http_protocol, self.main.ip,
                    self.n1ql_port,
                    bucket.name)
             self.change_and_update_permission(None, None, 'johnInsert', bucket.name, cmd,
@@ -1949,7 +1949,7 @@ class QueryTests(BaseTestCase):
             new_name = "employee-14-2"
             cmd = "{6} -u {0}:{1} {8}://{2}:{7}/query/service -d " \
                   "'statement=UPDATE {3} a set name = '{4}' where name = '{5}' limit 1'". \
-                format('john_update', 'password', self.master.ip, bucket.name, new_name,
+                format('john_update', 'password', self.main.ip, bucket.name, new_name,
                        old_name, self.curl_path, self.n1ql_port, self.http_protocol)
             self.change_and_update_permission(None, None, 'johnUpdate', bucket.name, cmd,
                                               "Unable to update into {0} as user {1}")
@@ -1957,14 +1957,14 @@ class QueryTests(BaseTestCase):
             del_name = "employee-14"
             cmd = "{5} -u {0}:{1} {7}://{2}:${6}/query/service -d " \
                   "'statement=DELETE FROM {3} a WHERE name = '{4}''". \
-                format('john_delete', 'password', self.master.ip, bucket.name, del_name,
+                format('john_delete', 'password', self.main.ip, bucket.name, del_name,
                        self.curl_path, self.n1ql_port, self.http_protocol)
             self.change_and_update_permission(None, None, 'john_delete', bucket.name, cmd,
                                               "Unable to delete from {0} as user {1}")
 
             cmd = "{4} -u {0}:{1} {6}://{2}:{5}/query/service -d 'statement=SELECT * from {3} " \
                   "LIMIT 10'". \
-                format('john_select2', 'password', self.master.ip, bucket.name, self.curl_path,
+                format('john_select2', 'password', self.main.ip, bucket.name, self.curl_path,
                        self.n1ql_port, self.http_protocol)
             self.change_and_update_permission(None, None, 'john_select2', bucket.name, cmd,
                                               "Unable to select from {0} as user {1}")
@@ -1975,21 +1975,21 @@ class QueryTests(BaseTestCase):
         self.n1ql_helper.run_cbq_query(query=self.query, server=self.n1ql_node)
         for bucket in self.buckets:
             cmds = ["{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:keyspaces'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path),
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path),
                     "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:namespaces'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path),
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path),
                     "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:datastores'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path),
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path),
                     "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:indexes'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path),
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path),
                     "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:completed_requests'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path),
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path),
                     "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:active_requests'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path),
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path),
                     "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:prepareds'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path),
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path),
                     "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:my_user_info'". \
-                        format('john_system', 'password', self.master.ip, bucket.name, self.curl_path)]
+                        format('john_system', 'password', self.main.ip, bucket.name, self.curl_path)]
             for cmd in cmds:
                 self.change_and_update_permission(None, None, 'john_system', bucket.name, cmd,
                                                   "Unable to select from {0} as user {1}")
@@ -2055,13 +2055,13 @@ class QueryTests(BaseTestCase):
         for bucket in self.buckets:
             # change permission of john_bucketadmin1 and verify its able to execute the correct query.
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} limit 1'". \
-                format('bucket0', 'password', self.master.ip, bucket.name, self.curl_path)
+                format('bucket0', 'password', self.main.ip, bucket.name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_select", 'bucket0', bucket.name, cmd,
                                               "Unable to select from {0} as user {1}")
 
             # change permission of john_bucketadminAll and verify its able to execute the correct query.
             cmd = "%s -u %s:%s http://%s:8093/query/service -d 'statement=INSERT INTO %s (KEY, VALUE) VALUES(\"1\", { \"value1\": \"one1\" })'" \
-                  % (self.curl_path, 'bucket0', 'password', self.master.ip, bucket.name)
+                  % (self.curl_path, 'bucket0', 'password', self.main.ip, bucket.name)
             self.change_and_update_permission('with_bucket', "query_insert", 'bucket0', bucket.name, cmd,
                                               "Unable to insert into {0} as user {1}")
 
@@ -2069,7 +2069,7 @@ class QueryTests(BaseTestCase):
             old_name = "employee-14"
             new_name = "employee-14-2"
             cmd = "{6} -u {0}:{1} http://{2}:8093/query/service -d 'statement=UPDATE {3} a set name = '{4}' where " \
-                  "name = '{5}' limit 1'".format('bucket0', 'password', self.master.ip, bucket.name, new_name,
+                  "name = '{5}' limit 1'".format('bucket0', 'password', self.main.ip, bucket.name, new_name,
                                                  old_name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_update", 'bucket0', bucket.name, cmd,
                                               "Unable to update  {0} as user {1}")
@@ -2077,13 +2077,13 @@ class QueryTests(BaseTestCase):
             # change permission of bucket0 and verify its able to execute the correct query.
             del_name = "employee-14"
             cmd = "{5} -u {0}:{1} http://{2}:8093/query/service -d 'statement=DELETE FROM {3} a WHERE name = '{4}''". \
-                format('bucket0', 'password', self.master.ip, bucket.name, del_name, self.curl_path)
+                format('bucket0', 'password', self.main.ip, bucket.name, del_name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_delete", 'bucket0', bucket.name, cmd,
                                               "Unable to delete from {0} as user {1}")
 
             # change permission of cbadminbucket user and verify its able to execute the correct query.
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:keyspaces'". \
-                format('cbadminbucket', 'password', self.master.ip, bucket.name, self.curl_path)
+                format('cbadminbucket', 'password', self.main.ip, bucket.name, self.curl_path)
             self.change_and_update_permission('without_bucket', "query_system_catalog", 'cbadminbucket',
                                               'cbadminbucket', cmd,
                                               "Unable to select from system:keyspaces as user {0}")
@@ -2099,39 +2099,39 @@ class QueryTests(BaseTestCase):
             {'id': 'cluster_user', 'name': 'cluster_user', 'password': 'password'},
             {'id': 'read_user', 'name': 'read_user', 'password': 'password'},
             {'id': 'cadmin', 'name': 'cadmin', 'password': 'password'}, ]
-        RbacBase().create_user_source(users, 'ldap', self.master)
+        RbacBase().create_user_source(users, 'ldap', self.main)
         rolelist = [{'id': 'john_bucketadminAll', 'name': 'john_bucketadminAll', 'roles': 'bucket_admin[*]'},
                     {'id': 'cluster_user', 'name': 'cluster_user', 'roles': 'cluster_admin'},
                     {'id': 'read_user', 'name': 'read_user', 'roles': 'ro_admin'},
                     {'id': 'cadmin', 'name': 'cadmin', 'roles': 'admin'}]
-        RbacBase().add_user_role(rolelist, RestConnection(self.master), 'ldap')
+        RbacBase().add_user_role(rolelist, RestConnection(self.main), 'ldap')
 
     def verify_pre_upgrade_users_permissions_helper(self, test=''):
 
         cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} LIMIT 10'". \
-            format('bucket0', 'password', self.master.ip, 'bucket0', self.curl_path)
+            format('bucket0', 'password', self.main.ip, 'bucket0', self.curl_path)
         self.change_and_update_permission(None, None, 'bucket0', 'bucket0', cmd,
                                           "Unable to select from {0} as user {1}")
 
         if test == 'online_upgrade':
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} LIMIT 10'". \
-                format('cbadminbucket', 'password', self.master.ip, 'default', self.curl_path)
+                format('cbadminbucket', 'password', self.main.ip, 'default', self.curl_path)
         else:
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} LIMIT 10'". \
-                format('cbadminbucket', 'password', self.master.ip, 'bucket0', self.curl_path)
+                format('cbadminbucket', 'password', self.main.ip, 'bucket0', self.curl_path)
 
         self.change_and_update_permission(None, None, 'cbadminbucket', 'bucket0', cmd,
                                           "Unable to select from {0} as user {1}")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from system:keyspaces'". \
-            format('cbadminbucket', 'password', self.master.ip, self.curl_path)
+            format('cbadminbucket', 'password', self.main.ip, self.curl_path)
         self.change_and_update_permission(None, None, 'cbadminbucket', 'system:keyspaces', cmd,
                                           "Unable to select from {0} as user {1}")
 
         for bucket in self.buckets:
             cmd = "%s -u %s:%s http://%s:8093/query/service -d " \
                   "'statement=INSERT INTO %s (KEY, VALUE) VALUES(\"5\", { \"value1\": \"one1\" })'" % \
-                  (self.curl_path, 'bucket0', 'password', self.master.ip, bucket.name)
+                  (self.curl_path, 'bucket0', 'password', self.main.ip, bucket.name)
 
             self.change_and_update_permission(None, None, 'bucket0', bucket.name, cmd,
                                               "Unable to insert into {0} as user {1}")
@@ -2140,13 +2140,13 @@ class QueryTests(BaseTestCase):
             new_name = "employee-14-2"
             cmd = "{6} -u {0}:{1} http://{2}:8093/query/service -d " \
                   "'statement=UPDATE {3} a set name = '{4}' where name = '{5}' limit 1'". \
-                format('bucket0', 'password', self.master.ip, bucket.name, new_name, old_name, self.curl_path)
+                format('bucket0', 'password', self.main.ip, bucket.name, new_name, old_name, self.curl_path)
             self.change_and_update_permission(None, None, 'bucket0', bucket.name, cmd,
                                               "Unable to update into {0} as user {1}")
 
             del_name = "employee-14"
             cmd = "{5} -u {0}:{1} http://{2}:8093/query/service -d 'statement=DELETE FROM {3} a WHERE name = '{4}''". \
-                format('bucket0', 'password', self.master.ip, bucket.name, del_name, self.curl_path)
+                format('bucket0', 'password', self.main.ip, bucket.name, del_name, self.curl_path)
             self.change_and_update_permission(None, None, 'bucket0', bucket.name, cmd,
                                               "Unable to delete from {0} as user {1}")
 
@@ -2154,7 +2154,7 @@ class QueryTests(BaseTestCase):
         for bucket in self.buckets:
             cmd = "%s -u %s:%s http://%s:8093/query/service -d " \
                   "'statement=INSERT INTO %s (KEY, VALUE) VALUES(\"test2\", { \"value1\": \"one1\" })'" % \
-                  (self.curl_path, 'cbadminbucket', 'password', self.master.ip, bucket.name)
+                  (self.curl_path, 'cbadminbucket', 'password', self.main.ip, bucket.name)
             self.change_and_update_permission(None, None, 'johnInsert', bucket.name, cmd,
                                               "Unable to insert into {0} as user {1}")
 
@@ -2162,12 +2162,12 @@ class QueryTests(BaseTestCase):
             new_name = "employee-14-2"
             cmd = "{6} -u {0}:{1} http://{2}:8093/query/service -d " \
                   "'statement=UPDATE {3} a set name = '{4}' where name = '{5}' limit 1'". \
-                format('cbadminbucket', 'password', self.master.ip, bucket.name, new_name, old_name, self.curl_path)
+                format('cbadminbucket', 'password', self.main.ip, bucket.name, new_name, old_name, self.curl_path)
             self.change_and_update_permission(None, None, 'johnUpdate', bucket.name, cmd,
                                               "Unable to update into {0} as user {1}")
 
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} LIMIT 10'". \
-                format(bucket.name, 'password', self.master.ip, bucket.name, self.curl_path)
+                format(bucket.name, 'password', self.main.ip, bucket.name, self.curl_path)
             self.change_and_update_permission(None, None, bucket.name, bucket.name, cmd,
                                               "Unable to select from {0} as user {1}")
 
@@ -2175,7 +2175,7 @@ class QueryTests(BaseTestCase):
         for bucket in self.buckets:
             # change permission of john_cluster and verify its able to execute the correct query.
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} limit 1'". \
-                format(bucket.name, 'password', self.master.ip, bucket.name, self.curl_path)
+                format(bucket.name, 'password', self.main.ip, bucket.name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_select", bucket.name,
                                               bucket.name, cmd, "Unable to select from {0} as user {1}")
 
@@ -2183,7 +2183,7 @@ class QueryTests(BaseTestCase):
             old_name = "employee-14"
             new_name = "employee-14-2"
             cmd = "{6} -u {0}:{1} http://{2}:8093/query/service -d 'statement=UPDATE {3} a set name = '{4}' where " \
-                  "name = '{5}' limit 1'".format('cbadminbucket', 'readonlypassword', self.master.ip, bucket.name,
+                  "name = '{5}' limit 1'".format('cbadminbucket', 'readonlypassword', self.main.ip, bucket.name,
                                                  new_name, old_name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_update", 'cbadminbucket',
                                               bucket.name, cmd, "Unable to update  {0} as user {1}")
@@ -2192,7 +2192,7 @@ class QueryTests(BaseTestCase):
             del_name = "employee-14"
             cmd = "{5} -u {0}:{1} http://{2}:8093/query/service -d " \
                   "'statement=DELETE FROM {3} a WHERE name = '{4}''". \
-                format('cbadminbucket', 'password', self.master.ip, bucket.name, del_name, self.curl_path)
+                format('cbadminbucket', 'password', self.main.ip, bucket.name, del_name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_delete", 'cbadminbucket',
                                               bucket.name, cmd, "Unable to update  {0} as user {1}")
 
@@ -2205,13 +2205,13 @@ class QueryTests(BaseTestCase):
         for bucket in self.buckets:
             # change permission of john_insert and verify its able to execute the correct query.
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} limit 1'". \
-                format('john_insert', 'password', self.master.ip, bucket.name, self.curl_path)
+                format('john_insert', 'password', self.main.ip, bucket.name, self.curl_path)
             self.change_and_update_permission('with_bucket', "bucket_admin", 'john_insert',
                                               bucket.name, cmd, "Unable to select from {0} as user {1}")
 
             # change permission of john_update and verify its able to execute the correct query.
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=INSERT INTO {3} values(\"k055\", 123  )' " \
-                .format('john_update', 'password', self.master.ip, bucket.name, self.curl_path)
+                .format('john_update', 'password', self.main.ip, bucket.name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_insert", 'john_update',
                                               bucket.name, cmd, "Unable to insert into {0} as user {1}")
 
@@ -2219,12 +2219,12 @@ class QueryTests(BaseTestCase):
             old_name = "employee-14"
             new_name = "employee-14-2"
             cmd = "{6} -u {0}:{1} http://{2}:8093/query/service -d 'statement=UPDATE {3} a set name = '{4}' where " \
-                  "name = '{5}' limit 1'".format('john_select', 'password', self.master.ip, bucket.name, new_name,
+                  "name = '{5}' limit 1'".format('john_select', 'password', self.main.ip, bucket.name, new_name,
                                                  old_name, self.curl_path)
             self.change_and_update_permission('without_bucket', "cluster_admin", 'john_select',
                                               bucket.name, cmd, "Unable to update  {0} as user {1}")
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} limit 1'". \
-                format('john_select', 'password', self.master.ip, bucket.name, self.curl_path)
+                format('john_select', 'password', self.main.ip, bucket.name, self.curl_path)
             output, error = self.shell.execute_command(cmd)
             self.assertTrue(any("success" in line for line in output), "Unable to select from {0} as user {1}".
                             format(bucket.name, 'john_select'))
@@ -2232,13 +2232,13 @@ class QueryTests(BaseTestCase):
             # change permission of john_select2 and verify its able to execute the correct query.
             del_name = "employee-14"
             cmd = "{5} -u {0}:{1} http://{2}:8093/query/service -d 'statement=DELETE FROM {3} a WHERE name = '{4}''". \
-                format('john_select2', 'password', self.master.ip, bucket.name, del_name, self.curl_path)
+                format('john_select2', 'password', self.main.ip, bucket.name, del_name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_delete", 'john_select2',
                                               bucket.name, cmd, "Unable to delete from {0} as user {1}")
 
             # change permission of john_delete and verify its able to execute the correct query.
             cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement=SELECT * from {3} limit 1'". \
-                format('john_delete', 'password', self.master.ip, bucket.name, self.curl_path)
+                format('john_delete', 'password', self.main.ip, bucket.name, self.curl_path)
             self.change_and_update_permission('with_bucket', "query_select", 'john_delete',
                                               bucket.name, cmd, "Unable to select from {0} as user {1}")
 
@@ -2250,7 +2250,7 @@ class QueryTests(BaseTestCase):
         """
         if not users:
             users = self.users
-        RbacBase().create_user_source(users, 'builtin', self.master)
+        RbacBase().create_user_source(users, 'builtin', self.main)
         self.log.info("SUCCESS: User(s) %s created" % ','.join([user['name'] for user in users]))
 
     def create_users_before_upgrade_non_ldap(self):
@@ -2258,7 +2258,7 @@ class QueryTests(BaseTestCase):
         password needs to be added statically for these users
         on the specific machine where ldap is enabled.
         """
-        cli_cmd = "{0}couchbase-cli -c {1}:8091 -u Administrator -p password".format(self.path, self.master.ip)
+        cli_cmd = "{0}couchbase-cli -c {1}:8091 -u Administrator -p password".format(self.path, self.main.ip)
         cmds = [("create a read only user account",
                  cli_cmd + " user-manage --set --ro-username=ro_non_ldap --ro-password=readonlypassword"),
                 ("create a bucket admin on bucket0 user account",
@@ -2278,8 +2278,8 @@ class QueryTests(BaseTestCase):
                  {'id': 'ro_non_ldap', 'name': 'ro_non_ldap', 'password': 'readonlypassword', 'roles': 'ro_admin'},
                  {'id': 'john_admin', 'name': 'john_admin', 'password': 'password', 'roles': 'admin'}]
 
-        RbacBase().create_user_source(users, 'ldap', self.master)
-        RbacBase().add_user_role(users, RestConnection(self.master), 'ldap')
+        RbacBase().create_user_source(users, 'ldap', self.main)
+        RbacBase().add_user_role(users, RestConnection(self.main), 'ldap')
 
     def _perform_offline_upgrade(self):
         for server in self.servers:
@@ -2348,7 +2348,7 @@ class QueryTests(BaseTestCase):
                 node_services = [",".join(node_services_list)]
 
                 self.log.info("Rebalancing the node out...")
-                failover_task = self.cluster.async_failover([self.master], failover_nodes=[node], graceful=False)
+                failover_task = self.cluster.async_failover([self.main], failover_nodes=[node], graceful=False)
                 failover_task.result()
                 active_nodes = []
                 for active_node in self.servers:
@@ -2363,7 +2363,7 @@ class QueryTests(BaseTestCase):
                 # self.sleep(30)
 
                 self.log.info("Adding node back to cluster...")
-                rest = RestConnection(self.master)
+                rest = RestConnection(self.main)
                 nodes_all = rest.node_statuses()
                 for cluster_node in nodes_all:
                     if cluster_node.ip == node.ip:
@@ -2392,12 +2392,12 @@ class QueryTests(BaseTestCase):
         """
         if not users:
             users = self.users
-        RbacBase().create_user_source(users, 'builtin', self.master)
+        RbacBase().create_user_source(users, 'builtin', self.main)
         self.log.info("SUCCESS: User(s) %s created" % ','.join([user['name'] for user in users]))
 
     def assign_role(self, rest=None, roles=None):
         if not rest:
-            rest = RestConnection(self.master)
+            rest = RestConnection(self.main)
         # Assign roles to users
         if not roles:
             roles = self.roles
@@ -2408,7 +2408,7 @@ class QueryTests(BaseTestCase):
 
     def delete_role(self, rest=None, user_ids=None):
         if not rest:
-            rest = RestConnection(self.master)
+            rest = RestConnection(self.main)
         if not user_ids:
             user_ids = [user['id'] for user in self.roles]
         RbacBase().remove_user_role(user_ids, rest)
@@ -2511,7 +2511,7 @@ class QueryTests(BaseTestCase):
         if type == 'roles':
             url = "/settings/rbac/roles"
             prepend = " Retrieve all User roles"
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         api = rest.baseUrl + url
         status, content, header = rest._http_request(api, 'GET')
         self.log.info("{3} - Status - {0} -- Content - {1} -- Header - {2}".format(status, content, header, prepend))
@@ -2556,9 +2556,9 @@ class QueryTests(BaseTestCase):
         self.assertTrue(actual_result['status'] == 'success', msg)
 
     def curl_with_roles(self, query):
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         cmd = "{4} -u {0}:{1} http://{2}:8093/query/service -d 'statement={3}'". \
-            format(self.users[0]['id'], self.users[0]['password'], self.master.ip, query, self.curl_path)
+            format(self.users[0]['id'], self.users[0]['password'], self.main.ip, query, self.curl_path)
         output, error = shell.execute_command(cmd)
         shell.log_command_output(output, error)
         new_list = [string.strip() for string in output]
@@ -2921,7 +2921,7 @@ class QueryTests(BaseTestCase):
     def execute_commands_inside(self, main_command, query, queries, bucket1, password, bucket2, source,
                                 subcommands=[], min_output_size=0,
                                 end_msg='', timeout=250):
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         shell.extract_remote_info()
         filename = "/tmp/test2"
         iswin = False
@@ -2988,7 +2988,7 @@ class QueryTests(BaseTestCase):
                 else:
                     main_command = main_command + " -f=" + filename
 
-        self.log.info("running command on {0}: {1}".format(self.master.ip, main_command))
+        self.log.info("running command on {0}: {1}".format(self.main.ip, main_command))
         output = ""
         if shell.remote:
             stdin, stdout, stderro = shell._ssh_client.exec_command(main_command)
@@ -3072,25 +3072,25 @@ class QueryTests(BaseTestCase):
     ##############################################################################################
     def curl_helper(self, statement):
         cmd = "{4} -u {0}:{1} {5}://{2}:8093/query/service -d 'statement={3}'". \
-            format('Administrator', 'password', self.master.ip, statement, self.curl_path, self.http_protocol)
+            format('Administrator', 'password', self.main.ip, statement, self.curl_path, self.http_protocol)
         return self.run_helper_cmd(cmd)
 
     def prepare_helper(self, statement):
         cmd = '{4} -u {0}:{1} {5}://{2}:{6}/query/service -d \'prepared="{' \
               '3}"&$type="Engineer"&$name="employee-4"\''. \
-            format('Administrator', 'password', self.master.ip, statement, self.curl_path,
+            format('Administrator', 'password', self.main.ip, statement, self.curl_path,
                    self.http_protocol, self.n1ql_port)
         return self.run_helper_cmd(cmd)
 
     def prepare_helper2(self, statement):
         cmd = '{4} -u {0}:{1} {5}://{2}:{6}/query/service -d \'prepared="{3}"&args=["Engineer",' \
               '"employee-4"]\''. \
-            format('Administrator', 'password', self.master.ip, statement, self.curl_path,
+            format('Administrator', 'password', self.main.ip, statement, self.curl_path,
                    self.http_protocol, self.n1ql_port)
         return self.run_helper_cmd(cmd)
 
     def run_helper_cmd(self, cmd):
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         output, error = shell.execute_command(cmd)
         new_list = [string.strip() for string in output]
         concat_string = ''.join(new_list)
@@ -3107,7 +3107,7 @@ class QueryTests(BaseTestCase):
             if self.input.tuq_client and "client" in self.input.tuq_client:
                 self.shell = RemoteMachineShellConnection(self.input.tuq_client["client"])
             else:
-                self.shell = RemoteMachineShellConnection(self.master)
+                self.shell = RemoteMachineShellConnection(self.main)
             o = self.shell.execute_command("ps -aef| grep cbq-engine")
             if len(o):
                 for cbq_engine in o[0]:
@@ -3345,7 +3345,7 @@ class QueryTests(BaseTestCase):
     def _verify_view_is_present(self, view_name, bucket):
         if self.primary_indx_type.lower() == 'gsi':
             return
-        ddoc, _ = RestConnection(self.master).get_ddoc(bucket.name, "ddl_%s" % view_name)
+        ddoc, _ = RestConnection(self.main).get_ddoc(bucket.name, "ddl_%s" % view_name)
         self.assertTrue(view_name in ddoc["views"], "View %s wasn't created" % view_name)
 
     def _is_index_in_list(self, bucket, index_name):
@@ -3481,7 +3481,7 @@ class QueryTests(BaseTestCase):
         items = 0
         for gen_load in gens_load[self.buckets[0]]:
             items += (gen_load.end - gen_load.start)
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         try:
             for bucket in self.buckets:
                 self.log.info("%s %s to %s documents..." % (op_type, items, bucket.name))
@@ -3701,12 +3701,12 @@ class QueryTests(BaseTestCase):
 # def _set_toplogy_star(self):
 #     UpgradeTests._set_toplogy_star(self)
 #
-# def _join_clusters(self, src_cluster_name, src_master, dest_cluster_name, dest_master):
-#     UpgradeTests._join_clusters(self, src_cluster_name, src_master,
-#                                 dest_cluster_name, dest_master)
+# def _join_clusters(self, src_cluster_name, src_main, dest_cluster_name, dest_main):
+#     UpgradeTests._join_clusters(self, src_cluster_name, src_main,
+#                                 dest_cluster_name, dest_main)
 #
-# def _replicate_clusters(self, src_master, dest_cluster_name, buckets):
-#     UpgradeTests._replicate_clusters(self, src_master, dest_cluster_name, buckets)
+# def _replicate_clusters(self, src_main, dest_cluster_name, buckets):
+#     UpgradeTests._replicate_clusters(self, src_main, dest_cluster_name, buckets)
 #
 # def _get_bucket(self, bucket_name, server):
 #     return UpgradeTests._get_bucket(self, bucket_name, server)

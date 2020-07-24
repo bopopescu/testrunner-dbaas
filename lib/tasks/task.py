@@ -682,7 +682,7 @@ class RebalanceTask(Task):
             self.set_exception(e)
 
     def add_nodes(self, task_manager):
-        master = self.servers[0]
+        main = self.servers[0]
         services_for_node = None
         node_index = 0
         for node in self.to_add:
@@ -691,10 +691,10 @@ class RebalanceTask(Task):
                 services_for_node = [self.services[node_index]]
                 node_index += 1
             if self.use_hostnames:
-                self.rest.add_node(master.rest_username, master.rest_password,
+                self.rest.add_node(main.rest_username, main.rest_password,
                                    node.hostname, node.port, services = services_for_node)
             else:
-                self.rest.add_node(master.rest_username, master.rest_password,
+                self.rest.add_node(main.rest_username, main.rest_password,
                                    node.ip, node.port, services = services_for_node)
 
     def start_rebalance(self, task_manager):
@@ -5062,12 +5062,12 @@ class CBASQueryExecuteTask(Task):
 
 
 class AutoFailoverNodesFailureTask(Task):
-    def __init__(self, master, servers_to_fail, failure_type, timeout,
+    def __init__(self, main, servers_to_fail, failure_type, timeout,
                  pause=0, expect_auto_failover=True, timeout_buffer=3,
                  check_for_failover=True, failure_timers=None,
                  disk_timeout=0, disk_location=None, disk_size=200):
         Task.__init__(self, "AutoFailoverNodesFailureTask")
-        self.master = master
+        self.main = main
         self.servers_to_fail = servers_to_fail
         self.num_servers_to_fail = self.servers_to_fail.__len__()
         self.itr = 0
@@ -5092,7 +5092,7 @@ class AutoFailoverNodesFailureTask(Task):
 
     def execute(self, task_manager):
         self.taskmanager = task_manager
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         if rest._rebalance_progress_status() == "running":
             self.rebalance_in_progress = True
         while self.has_next() and not self.done():
@@ -5108,7 +5108,7 @@ class AutoFailoverNodesFailureTask(Task):
         if not self.check_for_autofailover:
             self.state = EXECUTING
             return
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         max_timeout = self.timeout + self.timeout_buffer + self.disk_timeout
         if self.start_time == 0:
             message = "Did not inject failure in the system."
@@ -5193,7 +5193,7 @@ class AutoFailoverNodesFailureTask(Task):
         if self.pause != 0:
             time.sleep(self.pause)
             if self.pause > self.timeout and self.itr != 0:
-                rest = RestConnection(self.master)
+                rest = RestConnection(self.main)
                 status = rest.reset_autofailover()
                 self._rebalance()
                 if not status:
@@ -5372,7 +5372,7 @@ class AutoFailoverNodesFailureTask(Task):
             self.log.info(error)
 
     def _check_for_autofailover_initiation(self, failed_over_node):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         ui_logs = rest.get_logs(10)
         ui_logs_text = [t["text"] for t in ui_logs]
         ui_logs_time = [t["serverTime"] for t in ui_logs]
@@ -5402,7 +5402,7 @@ class AutoFailoverNodesFailureTask(Task):
         return mk_time
 
     def _rebalance(self):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         nodes = rest.node_statuses()
         rest.rebalance(otpNodes=[node.id for node in nodes])
         rebalance_progress = rest.monitorRebalance()
@@ -5412,7 +5412,7 @@ class AutoFailoverNodesFailureTask(Task):
             self.set_exception(Exception("Failed to rebalance after failover"))
 
     def _check_if_rebalance_in_progress(self, timeout):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         end_time = time.time() + timeout
         while time.time() < end_time:
             try:
@@ -5512,8 +5512,8 @@ class NodeMonitorsAnalyserTask(Task):
     def __init__(self, node, stop=False):
         Task.__init__(self, "NodeMonitorAnalyzerTask")
         self.command = "dict:to_list(node_status_analyzer:get_nodes())"
-        self.master = node
-        self.rest = RestConnection(self.master)
+        self.main = node
+        self.rest = RestConnection(self.main)
         self.stop = stop
 
     def execute(self, task_manager):
@@ -5525,7 +5525,7 @@ class NodeMonitorsAnalyserTask(Task):
     def check(self, task_manager):
         if self.status and self.content:
             self.log.info("NodeStatus: {}".format(self.content))
-            if not self.master.ip in self.content:
+            if not self.main.ip in self.content:
                 self.set_result(False)
                 self.state = FINISHED
                 self.set_exception(Exception("Node status monitors does not "
@@ -5536,7 +5536,7 @@ class NodeMonitorsAnalyserTask(Task):
         else:
             raise Exception("Monitors not working correctly")
 
-# Runs java sdk client directly on slave
+# Runs java sdk client directly on subordinate
 class SDKLoadDocumentsTask(Task):
     def __init__(self, server, bucket, sdk_docloader, pause_secs, timeout_secs):
         Task.__init__(self, "SDKLoadDocumentsTask")
@@ -5580,7 +5580,7 @@ class SDKLoadDocumentsTask(Task):
         self.state = FINISHED
         task_manager.schedule(self)
 
-# Runs java sdk client on a docker container on slave
+# Runs java sdk client on a docker container on subordinate
 class DockerSDKLoadDocumentsTask(Task):
     def __init__(self, server, bucket, sdk_docloader, pause_secs, timeout_secs):
         Task.__init__(self, "SDKLoadDocumentsTask")

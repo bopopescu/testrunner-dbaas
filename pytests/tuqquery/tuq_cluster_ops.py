@@ -39,7 +39,7 @@ class QueriesOpsTests(QuerySanityTests):
         super(QueriesOpsTests, self).suite_setUp()
 
     def tearDown(self):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         if rest._rebalance_progress_status() == 'running':
             self.log.warning("rebalancing is still running, test should be verified")
             stopped = rest.stop_rebalance()
@@ -49,10 +49,10 @@ class QueriesOpsTests(QuerySanityTests):
         except:
             pass
         try:
-            ClusterOperationHelper.cleanup_cluster(self.servers, master=self.master)
+            ClusterOperationHelper.cleanup_cluster(self.servers, main=self.main)
             self.sleep(1)
         except:
-            for server in set(self.servers) - {self.master}:
+            for server in set(self.servers) - {self.main}:
                 try:
                     rest = RestConnection(server)
                     rest.force_eject_node()
@@ -156,14 +156,14 @@ class QueriesOpsTests(QuerySanityTests):
             servr_out = self.servers[self.nodes_init - self.nodes_out:self.nodes_init]
             self.test_union()
 
-            nodes_all = RestConnection(self.master).node_statuses()
+            nodes_all = RestConnection(self.main).node_statuses()
             nodes = []
             for failover_node in servr_out:
                 nodes.extend([node for node in nodes_all
                               if node.ip == failover_node.ip and str(node.port) == failover_node.port])
             self.cluster.failover(self.servers[:self.nodes_init], servr_out)
             for node in nodes:
-                RestConnection(self.master).add_back_node(node.id)
+                RestConnection(self.main).add_back_node(node.id)
             rebalance = self.cluster.async_rebalance(self.servers[:self.nodes_init], [], [])
             self.test_union()
             rebalance.result()
@@ -173,7 +173,7 @@ class QueriesOpsTests(QuerySanityTests):
 
     def test_autofailover(self):
         autofailover_timeout = 30
-        status = RestConnection(self.master).update_autofailover_settings(True, autofailover_timeout)
+        status = RestConnection(self.main).update_autofailover_settings(True, autofailover_timeout)
         self.assertTrue(status, 'failed to change autofailover_settings!')
         servr_out = self.servers[self.nodes_init - self.nodes_out:self.nodes_init]
         self.test_union()
@@ -195,7 +195,7 @@ class QueriesOpsTests(QuerySanityTests):
                          'GROUP BY test.tasks_points.task1 ORDER BY points'
             self.log.info("run query to cancel")
             try:
-                RestConnection(self.master).query_tool(self.query, timeout=5)
+                RestConnection(self.main).query_tool(self.query, timeout=5)
             except:
                 self.log.info("query is cancelled")
             full_list = self.generate_full_docs_list(self.gens_load)
@@ -254,9 +254,9 @@ class QueriesOpsTests(QuerySanityTests):
         tmp_folder = "/tmp/backup"
         try:
             self.shell.create_directory(tmp_folder)
-            node = RestConnection(self.master).get_nodes_self()
+            node = RestConnection(self.main).get_nodes_self()
             self.is_membase = False
-            BackupHelper(self.master, self).backup('default', node, tmp_folder)
+            BackupHelper(self.main, self).backup('default', node, tmp_folder)
             self.verify_cluster_stats(self.servers[:self.nodes_init])
             self.test_union_all()
         finally:
@@ -268,14 +268,14 @@ class QueriesOpsTests(QuerySanityTests):
                                                self.input.membase_settings.rest_password)
         self.backup_location = self.input.param("backup_location", "/tmp/backup")
         self.command_options = self.input.param("command_options", '')
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         fn = getattr(self, method_name)
         fn()
         self.shell.execute_cluster_backup(self.couchbase_login_info, self.backup_location, self.command_options)
         fn = getattr(self, method_name)
         fn()
         for bucket in self.buckets:
-            self.cluster.bucket_flush(self.master, bucket=bucket)
+            self.cluster.bucket_flush(self.main, bucket=bucket)
         self.sleep(5, 'wait some time before restore')
         shell.restore_backupFile(self.couchbase_login_info, self.backup_location,
                                  [bucket.name for bucket in self.buckets])
@@ -295,14 +295,14 @@ class QueriesOpsTests(QuerySanityTests):
             self.run_cbq_query(query="CREATE INDEX %s ON %s(%s)" % (index_name, query_bucket,
                                                                     ','.join(index_field.split(';'))))
         try:
-            shell = RemoteMachineShellConnection(self.master)
+            shell = RemoteMachineShellConnection(self.main)
             fn = getattr(self, method_name)
             fn()
             self.shell.execute_cluster_backup(self.couchbase_login_info, self.backup_location, self.command_options)
             fn = getattr(self, method_name)
             fn()
             for bucket in self.buckets:
-                self.cluster.bucket_flush(self.master, bucket=bucket)
+                self.cluster.bucket_flush(self.main, bucket=bucket)
             self.sleep(5, 'wait some time before restore')
             shell.restore_backupFile(self.couchbase_login_info, self.backup_location,
                                      [bucket.name for bucket in self.buckets])
@@ -327,14 +327,14 @@ class QueriesOpsTests(QuerySanityTests):
             #     query += "  WITH {'index_type': 'memdb'}"
             self.run_cbq_query(query=query)
         try:
-            shell = RemoteMachineShellConnection(self.master)
+            shell = RemoteMachineShellConnection(self.main)
             fn = getattr(self, method_name)
             fn()
             self.shell.execute_cluster_backup(self.couchbase_login_info, self.backup_location, self.command_options)
             fn = getattr(self, method_name)
             fn()
             for bucket in self.buckets:
-                self.cluster.bucket_flush(self.master, bucket=bucket)
+                self.cluster.bucket_flush(self.main, bucket=bucket)
             self.sleep(5, 'wait some time before restore')
             shell.restore_backupFile(self.couchbase_login_info, self.backup_location,
                                      [bucket.name for bucket in self.buckets])
@@ -346,7 +346,7 @@ class QueriesOpsTests(QuerySanityTests):
 
     def test_audit_add_node(self):
         event_id = 8196  # add node
-        server = self.master
+        server = self.main
         if self.input.tuq_client and "client" in self.input.tuq_client:
             server = self.input.tuq_client["client"]
         index_field = self.input.param("index_field", 'job_title')
@@ -360,7 +360,7 @@ class QueriesOpsTests(QuerySanityTests):
             expected_result = {"services": self.services_in, 'port': 8091, 'hostname': servers_in[0].ip,
                                'groupUUID': "0",
                                'node': 'ns_1@' + servers_in[0].ip, 'source': 'ns_server',
-                               'user': self.master.rest_username,
+                               'user': self.main.rest_username,
                                "ip": self.getLocalIPAddress(), "port": 57457}
             self.test_min()
             audit_reb_in.checkConfig(expected_result)
@@ -372,7 +372,7 @@ class QueriesOpsTests(QuerySanityTests):
 
     def test_audit_rm_node(self):
         eventID = 8197  # add node
-        server = self.master
+        server = self.main
         if self.input.tuq_client and "client" in self.input.tuq_client:
             server = self.input.tuq_client["client"]
         index_field = self.input.param("index_field", 'job_title')
@@ -386,7 +386,7 @@ class QueriesOpsTests(QuerySanityTests):
             expected_result = {"services": self.services_in, 'port': 8091, 'hostname': servers_in[0].ip,
                                'groupUUID': "0",
                                'node': 'ns_1@' + servers_in[0].ip, 'source': 'ns_server',
-                               'user': self.master.rest_username,
+                               'user': self.main.rest_username,
                                "ip": self.getLocalIPAddress(), "port": 57457}
             self.test_min()
             audit_reb_out.checkConfig(expected_result)
@@ -465,7 +465,7 @@ class QueriesOpsTests(QuerySanityTests):
     def test_rebalance_failure_retry(self):
         self.assertTrue(len(self.servers) >= self.nodes_in + 1, "Servers are not enough")
         body = {"enabled": "true", "afterTimePeriod": self.retry_time, "maxAttempts": self.num_retries}
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         rest.set_retry_rebalance_settings(body)
         result = rest.get_retry_rebalance_settings()
         if self.rebalance_out:
@@ -658,14 +658,14 @@ class QueriesOpsTests(QuerySanityTests):
         try:
             servr_out = self.servers[self.nodes_init - self.nodes_out:self.nodes_init]
 
-            nodes_all = RestConnection(self.master).node_statuses()
+            nodes_all = RestConnection(self.main).node_statuses()
             nodes = []
             for failover_node in servr_out:
                 nodes.extend([node for node in nodes_all
                               if node.ip == failover_node.ip and str(node.port) == failover_node.port])
             self.cluster.failover(self.servers[:self.nodes_init], servr_out)
             for node in nodes:
-                RestConnection(self.master).add_back_node(node.id)
+                RestConnection(self.main).add_back_node(node.id)
             rebalance = self.cluster.async_rebalance(self.servers[:self.nodes_init], [], [])
             rebalance.result()
             self.log.info("-" * 100)
@@ -677,7 +677,7 @@ class QueriesOpsTests(QuerySanityTests):
 
     def test_prepared_with_autofailover(self):
         autofailover_timeout = 30
-        status = RestConnection(self.master).update_autofailover_settings(True, autofailover_timeout)
+        status = RestConnection(self.main).update_autofailover_settings(True, autofailover_timeout)
         self.assertTrue(status, 'failed to change autofailover_settings!')
         servr_out = self.servers[self.nodes_init - self.nodes_out:self.nodes_init]
         remote = RemoteMachineShellConnection(self.servers[self.nodes_init - 1])
@@ -734,7 +734,7 @@ class QueriesOpsJoinsTests(JoinTests):
         super(QueriesOpsJoinsTests, self).suite_setUp()
 
     def tearDown(self):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         if rest._rebalance_progress_status() == 'running':
             self.log.warning("rebalancing is still running, test should be verified")
             stopped = rest.stop_rebalance()
@@ -815,14 +815,14 @@ class QueriesOpsJoinsTests(JoinTests):
         fn = getattr(self, self.test_to_run)
         fn()
 
-        nodes_all = RestConnection(self.master).node_statuses()
+        nodes_all = RestConnection(self.main).node_statuses()
         nodes = []
         for failover_node in servr_out:
             nodes.extend([node for node in nodes_all
                           if node.ip != failover_node.ip or str(node.port) != failover_node.port])
         self.cluster.failover(self.servers[:self.nodes_init], servr_out)
         for node in nodes:
-            RestConnection(self.master).add_back_node(node.id)
+            RestConnection(self.main).add_back_node(node.id)
         rebalance = self.cluster.async_rebalance(self.servers[:self.nodes_init], [], [])
         fn()
         rebalance.result()

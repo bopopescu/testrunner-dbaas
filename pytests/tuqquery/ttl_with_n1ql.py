@@ -20,9 +20,9 @@ class QueryExpirationTests(QueryTests):
         self.index_stat = 'items_count'
         self.exp_index = 'idx_expire'
         self.default_bucket_name = self.input.param('bucket_name', 'default')
-        self.cb_rest = RestConnection(self.master)
-        self.cb_cluster = Cluster('couchbase://{0}'.format(self.master.ip))
-        authenticator = PasswordAuthenticator(self.master.rest_username, self.master.rest_password)
+        self.cb_rest = RestConnection(self.main)
+        self.cb_cluster = Cluster('couchbase://{0}'.format(self.main.ip))
+        authenticator = PasswordAuthenticator(self.main.rest_username, self.main.rest_password)
         self.cb_cluster.authenticate(authenticator)
 
     def tearDown(self):
@@ -44,7 +44,7 @@ class QueryExpirationTests(QueryTests):
          -t tuqquery.ttl_with_n1ql.QueryExpirationTests.test_insert_with_ttl
         """
         # creating default bucket
-        default_params = self._create_bucket_params(server=self.master, size=100,
+        default_params = self._create_bucket_params(server=self.main, size=100,
                                                     replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                     enable_replica_index=self.enable_replica_index,
                                                     eviction_policy=self.eviction_policy, lww=self.lww,
@@ -131,7 +131,7 @@ class QueryExpirationTests(QueryTests):
         self._wait_for_index_online(self.sample_bucket, self.sample_bucket_index)
 
         # creating default bucket
-        default_params = self._create_bucket_params(server=self.master, size=100,
+        default_params = self._create_bucket_params(server=self.main, size=100,
                                                     replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                     enable_replica_index=self.enable_replica_index,
                                                     eviction_policy=self.eviction_policy, lww=self.lww,
@@ -210,7 +210,7 @@ class QueryExpirationTests(QueryTests):
         bucket_size=100 -t tuqquery.ttl_with_n1ql.QueryExpirationTests.test_insert_with_invalid_ttl
         """
         # creating default bucket
-        default_params = self._create_bucket_params(server=self.master, size=100,
+        default_params = self._create_bucket_params(server=self.main, size=100,
                                                     replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                     enable_replica_index=self.enable_replica_index,
                                                     eviction_policy=self.eviction_policy, lww=self.lww,
@@ -272,7 +272,7 @@ class QueryExpirationTests(QueryTests):
         self.wait_for_buckets_status({self.sample_bucket: 'healthy'}, 5, 120)
         self.wait_for_bucket_docs({self.sample_bucket: result_count}, 5, 120)
         self._wait_for_index_online(self.sample_bucket, self.sample_bucket_index)
-        num_docs = self.get_item_count(self.master, bucket)
+        num_docs = self.get_item_count(self.main, bucket)
         get_doc_ids_query = 'SELECT META().id FROM {0}'.format(query_sample_bucket)
         result = self.run_cbq_query(get_doc_ids_query)
         doc_ids_for_new_insertion = ['k00', 'k01', 'k02', 'k03']
@@ -299,7 +299,7 @@ class QueryExpirationTests(QueryTests):
             if item['id'] in doc_ids_for_new_insertion:
                 self.assertEqual(item['expiration'], 0, "Expiration is not set to 0 for new insertions")
 
-        new_num_docs = self.get_item_count(self.master, bucket)
+        new_num_docs = self.get_item_count(self.main, bucket)
         self.assertEqual(new_num_docs, num_docs + len(query_with_zero_ttl) - 1 + result_count,
                          "Some of newly inserted docs are missing")
 
@@ -317,7 +317,7 @@ class QueryExpirationTests(QueryTests):
         expiration_time = 10
 
         # creating default bucket
-        default_params = self._create_bucket_params(server=self.master, size=100,
+        default_params = self._create_bucket_params(server=self.main, size=100,
                                                     replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                     enable_replica_index=self.enable_replica_index,
                                                     eviction_policy=self.eviction_policy, lww=self.lww,
@@ -387,7 +387,7 @@ class QueryExpirationTests(QueryTests):
         self._wait_for_index_online(self.sample_bucket, self.sample_bucket_index)
 
         # creating default bucket
-        default_params = self._create_bucket_params(server=self.master, size=100,
+        default_params = self._create_bucket_params(server=self.main, size=100,
                                                     replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                     enable_replica_index=self.enable_replica_index,
                                                     eviction_policy=self.eviction_policy, lww=self.lww,
@@ -455,7 +455,7 @@ class QueryExpirationTests(QueryTests):
         bucket_size=100 -t tuqquery.ttl_with_n1ql.QueryExpirationTests.test_upsert_with_invalid_ttl
         """
         # creating default bucket
-        default_params = self._create_bucket_params(server=self.master, size=100,
+        default_params = self._create_bucket_params(server=self.main, size=100,
                                                     replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                     enable_replica_index=self.enable_replica_index,
                                                     eviction_policy=self.eviction_policy, lww=self.lww,
@@ -517,7 +517,7 @@ class QueryExpirationTests(QueryTests):
         self.wait_for_buckets_status({self.sample_bucket: 'healthy'}, 5, 120)
         self.wait_for_bucket_docs({self.sample_bucket: result_count}, 5, 120)
         self._wait_for_index_online(self.sample_bucket, self.sample_bucket_index)
-        num_docs = self.get_item_count(self.master, bucket)
+        num_docs = self.get_item_count(self.main, bucket)
         get_doc_ids_query = 'SELECT META().id FROM {0}'.format(query_sample_bucket)
         result = self.run_cbq_query(get_doc_ids_query)
         doc_ids_for_new_insertion = ['k00', 'k01', 'k02', 'k03']
@@ -545,7 +545,7 @@ class QueryExpirationTests(QueryTests):
             if item['id'] in doc_ids_for_new_insertion:
                 self.assertEqual(item['expiration'], 0, "Expiration is not set to 0 for new insertions")
 
-        new_num_docs = self.get_item_count(self.master, bucket)
+        new_num_docs = self.get_item_count(self.main, bucket)
         self.assertEqual(new_num_docs, num_docs + len(query_with_zero_ttl) - 1 + result_count,
                          "Some of newly inserted docs are missing")
 
@@ -635,7 +635,7 @@ class QueryExpirationTests(QueryTests):
         num_iter = 10
 
         # creating default bucket
-        default_params = self._create_bucket_params(server=self.master, size=100,
+        default_params = self._create_bucket_params(server=self.main, size=100,
                                                     replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                     enable_replica_index=self.enable_replica_index,
                                                     eviction_policy=self.eviction_policy, lww=self.lww,
@@ -930,8 +930,8 @@ class QueryExpirationTests(QueryTests):
         """
         @summary: Update doc expiration from a user who doesn't have Query delete permission
         """
-        cluster = Cluster('couchbase://{0}'.format(self.master.ip))
-        authenticator = PasswordAuthenticator(self.master.rest_username, self.master.rest_password)
+        cluster = Cluster('couchbase://{0}'.format(self.main.ip))
+        authenticator = PasswordAuthenticator(self.main.rest_username, self.main.rest_password)
         cluster.authenticate(authenticator)
 
         # Loading travel-sample bucket
@@ -973,7 +973,7 @@ class QueryExpirationTests(QueryTests):
         """
         @summary: This method returns no. of doc expired as reflected in KV stats
         """
-        nodes = self.get_kv_nodes(self.servers, self.master)
+        nodes = self.get_kv_nodes(self.servers, self.main)
         active_expired_stats = 0
         count = 0
         while count < max_retry:
@@ -996,7 +996,7 @@ class QueryExpirationTests(QueryTests):
     def _is_expected_index_count(self, bucket_name, idx_name, stat_name, expected_stat_value,
                                  index_node=None, max_try=25, sleep_time=2):
         if not index_node:
-            index_node = self.master
+            index_node = self.main
         rest = RestConnection(index_node)
         count = 0
         curr_stat_value = None

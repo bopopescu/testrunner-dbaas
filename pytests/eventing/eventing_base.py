@@ -38,8 +38,8 @@ class EventingBaseTest(QueryHelperTests):
         self.input = TestInputSingleton.input
         self.input.test_params.update({"default_bucket": False})
         super(EventingBaseTest, self).setUp()
-        self.master = self.servers[0]
-        self.server = self.master
+        self.main = self.servers[0]
+        self.server = self.main
         self.restServer = self.get_nodes_from_services_map(service_type="eventing")
         if self.restServer:
             self.rest = RestConnection(self.restServer)
@@ -69,7 +69,7 @@ class EventingBaseTest(QueryHelperTests):
         self.n1ql_helper = N1QLHelper(shell=self.shell, max_verify=self.max_verify, buckets=self.buckets,
                                       item_flag=self.item_flag, n1ql_port=self.n1ql_port,
                                       full_docs_list=self.full_docs_list, log=self.log, input=self.input,
-                                      master=self.master, use_rest=True)
+                                      main=self.main, use_rest=True)
         self.pause_resume = self.input.param('pause_resume', False)
         self.pause_resume_number = self.input.param('pause_resume_number', 1)
         self.is_curl=self.input.param('curl',False)
@@ -99,7 +99,7 @@ class EventingBaseTest(QueryHelperTests):
     def tearDown(self):
         # catch panics and print it in the test log
         self.check_eventing_logs_for_panic()
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         buckets = rest.get_buckets()
         for bucket in buckets:
             stats = rest.get_bucket_stats(bucket)
@@ -500,7 +500,7 @@ class EventingBaseTest(QueryHelperTests):
             gen_create = BlobGenerator('dgmkv', 'dgmkv-', doc_size, start=curr_items + 1, end=curr_items + 20000)
             total_items += batch_items
             try:
-                self.cluster.load_gen_docs(self.master, bucket, gen_create, self.buckets[0].kvs[1],
+                self.cluster.load_gen_docs(self.main, bucket, gen_create, self.buckets[0].kvs[1],
                                            'create', exp=0, flag=0, batch_size=1000, compression=self.sdk_compression)
             except:
                 pass
@@ -510,7 +510,7 @@ class EventingBaseTest(QueryHelperTests):
         return total_items
 
     def bucket_stat(self, key, bucket):
-        stats = StatsCommon.get_stats([self.master], bucket, "", key)
+        stats = StatsCommon.get_stats([self.main], bucket, "", key)
         val = list(stats.values())[0]
         if val.isdigit():
             val = int(val)
@@ -736,7 +736,7 @@ class EventingBaseTest(QueryHelperTests):
             body["enabled"] = "false"
         body["afterTimePeriod"] = afterTimePeriod
         body["maxAttempts"] = maxAttempts
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         rest.set_retry_rebalance_settings(body)
         result = rest.get_retry_rebalance_settings()
         self.log.info("Retry Rebalance settings changed to : {0}"

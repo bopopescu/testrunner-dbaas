@@ -99,7 +99,7 @@ class XDCRCallable:
         3. Remove all buckets.
         """
         self.log.info("removing xdcr/nodes settings")
-        rest = RestConnection(cluster.get_master_node())
+        rest = RestConnection(cluster.get_main_node())
         rest.remove_all_replications()
         rest.remove_all_remote_clusters()
         rest.remove_all_recoveries()

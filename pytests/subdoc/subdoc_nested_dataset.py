@@ -15,8 +15,8 @@ class SubdocNestedDataset(SubdocBaseTest):
     def setUp(self):
         super(SubdocNestedDataset, self).setUp()
         self.nesting_level = self.input.param("nesting_level", 0)
-        print("-->master: {}".format(self.master))
-        self.client = self.direct_client(self.master, self.buckets[0])
+        print("-->main: {}".format(self.main))
+        self.client = self.direct_client(self.main, self.buckets[0])
         self.is_sdk_client = True if self.client.__class__.__name__ == 'SDKClient' else False
 
     def tearDown(self):

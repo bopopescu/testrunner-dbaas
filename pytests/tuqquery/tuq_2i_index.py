@@ -23,10 +23,10 @@ class QueriesIndexTests(QueryTests):
             self.input.test_params["stop-on-failure"] = True
             self.log.error("MAX NUMBER OF INDEXES IS 3. ALL TESTS WILL BE SKIPPED")
             self.fail('MAX NUMBER OF INDEXES IS 3. ALL TESTS WILL BE SKIPPED')
-        self.rest = RestConnection(self.master)
+        self.rest = RestConnection(self.main)
         self.skip_host_login = self.input.param("skip_host_login", False)
         if not self.skip_host_login:
-            self.shell = RemoteMachineShellConnection(self.master)
+            self.shell = RemoteMachineShellConnection(self.main)
         self.delete_sample = self.input.param("delete_sample", False)
         self.log.info("==============  QueriesIndexTests setup has completed ==============")
         self.log_config_info()
@@ -51,8 +51,8 @@ class QueriesIndexTests(QueryTests):
 
     def test_orderedintersectscan(self):
         for bucket in self.buckets:
-            self.cluster.bucket_delete(self.master, bucket=bucket, timeout=180000)
-        rest = RestConnection(self.master)
+            self.cluster.bucket_delete(self.main, bucket=bucket, timeout=180000)
+        rest = RestConnection(self.main)
         rest.load_sample(self.sample_bucket)
         self.wait_for_all_indexes_online()
         created_indexes = []
@@ -84,8 +84,8 @@ class QueriesIndexTests(QueryTests):
 
     def test_remove_equality_orderby(self):
         for bucket in self.buckets:
-            self.cluster.bucket_delete(self.master, bucket=bucket, timeout=180000)
-        rest = RestConnection(self.master)
+            self.cluster.bucket_delete(self.main, bucket=bucket, timeout=180000)
+        rest = RestConnection(self.main)
         rest.load_sample(self.sample_bucket)
         query_bucket = self.get_collection_name("`{0}`".format(self.sample_bucket))
         created_indexes = []
@@ -110,8 +110,8 @@ class QueriesIndexTests(QueryTests):
 
     def test_use_suffixes_and_tokens(self):
         for bucket in self.buckets:
-            self.cluster.bucket_delete(self.master, bucket=bucket, timeout=180000)
-        rest = RestConnection(self.master)
+            self.cluster.bucket_delete(self.main, bucket=bucket, timeout=180000)
+        rest = RestConnection(self.main)
         rest.load_sample(self.sample_bucket)
         query_bucket = self.get_collection_name('`{0}`'.format(self.sample_bucket))
         created_indexes = []
@@ -4643,7 +4643,7 @@ class QueriesIndexTests(QueryTests):
                     actual_result = self.run_cbq_query()
                     self.assertTrue(len(actual_result['results']), self.num_items)
             except Exception as ex:
-                content = self.cluster.query_view(self.master, "ddl_{0}".format(view_name), view_name, {"stale": "ok"},
+                content = self.cluster.query_view(self.main, "ddl_{0}".format(view_name), view_name, {"stale": "ok"},
                                                   bucket="default", retry_time=1)
                 self.log.info("Generated view has {0} items".format(len(content['rows'])))
                 raise ex
@@ -4801,7 +4801,7 @@ class QueriesIndexTests(QueryTests):
                         self.sleep(5, "sleep for kv operations")
             except Exception as ex:
                 for view_name in created_indexes:
-                    content = self.cluster.query_view(self.master, "ddl_{0}".format(view_name), view_name,
+                    content = self.cluster.query_view(self.main, "ddl_{0}".format(view_name), view_name,
                                                       {"stale": "ok"},
                                                       bucket="default", retry_time=1)
                     self.log.info("Generated view has {0} items".format(len(content['rows'])))

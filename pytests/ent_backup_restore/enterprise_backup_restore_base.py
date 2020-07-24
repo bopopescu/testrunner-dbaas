@@ -69,9 +69,9 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
         self.merge_should_fail = self.input.param("merge_should_fail", False)
         self.database_path = COUCHBASE_DATA_PATH
 
-        cmd = 'curl -g {0}:8091/diag/eval -u {1}:{2} '.format(self.master.ip,
-                                                              self.master.rest_username,
-                                                              self.master.rest_password)
+        cmd = 'curl -g {0}:8091/diag/eval -u {1}:{2} '.format(self.main.ip,
+                                                              self.main.rest_username,
+                                                              self.main.rest_password)
         cmd += '-d "path_config:component_path(bin)."'
         bin_path = subprocess.check_output(cmd, shell=True)
         try:
@@ -80,7 +80,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
             pass
         if not self.skip_init_check_cbserver:
             if "bin" not in bin_path:
-                self.fail("Check if cb server install on %s" % self.master.ip)
+                self.fail("Check if cb server install on %s" % self.main.ip)
             else:
                 self.cli_command_location = bin_path.replace('"', '') + "/"
 
@@ -127,9 +127,9 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
         self.seconds_with_ttl = "date +%s --date='{0} seconds'".format(self.replace_ttl_with)
         if info == 'linux':
             if self.nonroot:
-                base_path = "/home/%s" % self.master.ssh_username
+                base_path = "/home/%s" % self.main.ssh_username
                 self.database_path = "%s%s" % (base_path, COUCHBASE_DATA_PATH)
-                self.root_path = "/home/%s/" % self.master.ssh_username
+                self.root_path = "/home/%s/" % self.main.ssh_username
         elif info == 'windows':
             self.os_name = "windows"
             self.cmd_ext = ".exe"
@@ -154,11 +154,11 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
             self.backupset.directory = self.input.param("dir", "/tmp/entbackup")
         else:
             raise Exception("OS not supported.")
-        self.backup_validation_files_location = "/tmp/backuprestore" + self.master.ip
+        self.backup_validation_files_location = "/tmp/backuprestore" + self.main.ip
         self.backupset.backup_host = self.input.clusters[1][0]
-        self.backupset.directory += "_" + self.master.ip
+        self.backupset.directory += "_" + self.main.ip
         self.backupset.name = self.input.param("name", "backup")
-        self.non_master_host = self.input.param("non-master", False)
+        self.non_main_host = self.input.param("non-main", False)
         self.compact_backup = self.input.param("compact-backup", False)
         self.merged = self.input.param("merged", None)
         self.expire_time = self.input.param('expire_time', 0)
@@ -186,7 +186,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
         self.vbucket_filter = self.input.param("vbucket-filter", None)
         self.restore_compression_mode = self.input.param("restore-compression-mode", None)
         self.force_version_upgrade = self.input.param("force-version-upgrade", None)
-        if self.non_master_host:
+        if self.non_main_host:
             self.backupset.cluster_host = self.servers[1]
             self.backupset.cluster_host_username = self.servers[1].rest_username
             self.backupset.cluster_host_password = self.servers[1].rest_password
@@ -273,10 +273,10 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
         self.skip_buckets = self.input.param("skip_buckets", False)
         self.lww_new = self.input.param("lww_new", False)
         self.skip_consistency = self.input.param("skip_consistency", False)
-        self.master_services = self.get_services([self.backupset.cluster_host],
+        self.main_services = self.get_services([self.backupset.cluster_host],
                                                  self.services_init, start_node=0)
-        if not self.master_services:
-            self.master_services = ["kv"]
+        if not self.main_services:
+            self.main_services = ["kv"]
         self.restore_services = self.get_services([self.backupset.restore_cluster_host],
                                                   self.services_init, start_node=0)
         if not self.restore_services:
@@ -299,8 +299,8 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
                 backup_directory = WIN_TMP_PATH_RAW + "entbackup"
             else:
                 raise Exception("OS not supported.")
-            backup_directory += "_" + self.master.ip
-            validation_files_location = "%sbackuprestore" % self.tmp_path + self.master.ip
+            backup_directory += "_" + self.main.ip
+            validation_files_location = "%sbackuprestore" % self.tmp_path + self.main.ip
             if info == 'linux':
                 command = "rm -rf {0}".format(backup_directory)
                 output, error = remote_client.execute_command(command)
@@ -349,7 +349,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
 
     def backup_reset_clusters(self, servers):
         BucketOperationHelper.delete_all_buckets_or_assert(servers, self)
-        ClusterOperationHelper.cleanup_cluster(servers, master=servers[0])
+        ClusterOperationHelper.cleanup_cluster(servers, main=servers[0])
         ClusterOperationHelper.wait_for_ns_servers_or_assert(servers,
                                                              self, debug=False)
 
@@ -1345,7 +1345,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
 
             self.validation_helper.validate_merge(self.backup_validation_files_location)
 
-    def validate_backup_data(self, server_host, server_bucket, master_key,
+    def validate_backup_data(self, server_host, server_bucket, main_key,
                              perNode, getReplica, mode, items, key_check,
                              validate_keys=False,
                              regex_pattern=None):
@@ -1356,7 +1356,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
         data_collector = DataCollector()
         bk_file_data, _ = data_collector.get_kv_dump_from_backup_file(server_host,
                                                                       self.cli_command_location, self.cmd_ext,
-                                                                      self.backupset.directory, master_key,
+                                                                      self.backupset.directory, main_key,
                                                                       self.buckets)
         restore_file_data = bk_file_data
         regex_backup_data = {}
@@ -1641,8 +1641,8 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
     def create_indexes(self):
         gsi_type = "memory_optimized"
         rest = RestConnection(self.backupset.cluster_host)
-        username = self.master.rest_username
-        password = self.master.rest_password
+        username = self.main.rest_username
+        password = self.main.rest_password
         if "5" <= rest.get_nodes_version()[:1]:
             gsi_type = "plasma"
         gsi_type += " -auth {0}:{1} ".format(username, password)
@@ -1757,25 +1757,25 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
         return kv_quota
 
     def _reset_restore_cluster_with_bk_services(self, bk_services):
-        master = self.backupset.restore_cluster_host
+        main = self.backupset.restore_cluster_host
 
         BucketOperationHelper.delete_all_buckets_or_assert(
             self.backupset.restore_cluster, self)
         ClusterOperationHelper.cleanup_cluster(
-            self.backupset.restore_cluster, master=master)
+            self.backupset.restore_cluster, main=main)
 
-        rest = RestConnection(master).force_eject_node()
-        rest = RestConnection(master)
+        rest = RestConnection(main).force_eject_node()
+        rest = RestConnection(main)
         ready = RestHelper(rest).is_ns_server_running()
         if ready:
-            shell = RemoteMachineShellConnection(master)
+            shell = RemoteMachineShellConnection(main)
             shell.enable_diag_eval_on_non_local_hosts()
             shell.disconnect()
         else:
             self.fail("NS server is not ready after reset node")
         bk_services = ['kv', 'index', 'n1ql']
         for i in range(len(self.servers)):
-            if self.servers[i].ip == master.ip:
+            if self.servers[i].ip == main.ip:
                 self.backupset.restore_cluster_host.services = ",".join(bk_services)
                 break
         rest = RestConnection(self.backupset.restore_cluster_host)
@@ -1918,7 +1918,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
                     logs_path, zip_file))
                 if 'redacted-' in zip_file:
                     # Redacted logs include the backup archive one layer deeper
-                    if self.master.ip in zip_file:
+                    if self.main.ip in zip_file:
                         log_archive_names.append("{}/{}".format(
                             ".".join(zip_file.split(".")[:-1]),
                             ".".join(zip_file.split(".")[:-1]).split('-', 1)[1]))
@@ -1927,7 +1927,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
                             zip_file.split(".")[0],
                             zip_file.split(".")[0].split('-', 1)[1]))
                 else:
-                    if self.master.ip in zip_file:
+                    if self.main.ip in zip_file:
                         log_archive_names.append(".".join(zip_file.split(".")[:-1]))
                     else:
                         log_archive_names.append(zip_file.split(".")[0])
@@ -2332,7 +2332,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
     def _verify_backup_events_definition(self, bk_fxn):
         backup_path = self.backupset.directory + "/backup/{0}/".format(self.backups[0])
         events_file_name = "events.json"
-        bk_file_events_dir = "/tmp/backup_events{0}/".format(self.master.ip)
+        bk_file_events_dir = "/tmp/backup_events{0}/".format(self.main.ip)
         bk_file_events_path = bk_file_events_dir + events_file_name
 
         shell = RemoteMachineShellConnection(self.backupset.backup_host)
@@ -2349,7 +2349,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
             if v != bk_fxn[0]["settings"][k]:
                 self.log.info("key {0} has value not match".format(k))
                 self.log.info("{0} : {1}".format(v, bk_fxn[0]["settings"][k]))
-        self.log.info("remove tmp file in slave")
+        self.log.info("remove tmp file in subordinate")
         if os.path.exists(bk_file_events_dir):
             shutil.rmtree(bk_file_events_dir)
         shell.disconnect()
@@ -2357,7 +2357,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
     def _verify_restore_events_definition(self, bk_fxn):
         backup_path = self.backupset.directory + "/backup/{0}/".format(self.backups[0])
         events_file_name = "events.json"
-        bk_file_events_dir = "/tmp/backup_events{0}/".format(self.master.ip)
+        bk_file_events_dir = "/tmp/backup_events{0}/".format(self.main.ip)
         bk_file_events_path = bk_file_events_dir + events_file_name
         rest = RestConnection(self.backupset.restore_cluster_host)
         rs_fxn = rest.get_all_functions()
@@ -2487,7 +2487,7 @@ class EnterpriseBackupRestoreBase(BaseTestCase):
         if rs_bucket:
             BucketOperationHelper.delete_all_buckets_or_assert(self.backupset.restore_cluster, self)
         ClusterOperationHelper.cleanup_cluster(self.backupset.restore_cluster,
-                                               master=self.backupset.restore_cluster_host)
+                                               main=self.backupset.restore_cluster_host)
 
         rest_bk = RestConnection(self.backupset.cluster_host)
         bk_storage_mode = rest_bk.get_index_settings()["indexer.settings.storage_mode"]
@@ -2700,13 +2700,13 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         :return: List of tasks running the load operations.
         """
         tasks = []
-        create_tasks = self._async_load_all_buckets(self.master,
+        create_tasks = self._async_load_all_buckets(self.main,
                                                     self.create_gen,
                                                     "create", self.expires)
-        update_tasks = self._async_load_all_buckets(self.master,
+        update_tasks = self._async_load_all_buckets(self.main,
                                                     self.update_gen,
                                                     "update", self.expires)
-        delete_tasks = self._async_load_all_buckets(self.master,
+        delete_tasks = self._async_load_all_buckets(self.main,
                                                     self.delete_gen,
                                                     "delete", self.expires)
         tasks.extend(create_tasks)
@@ -2734,7 +2734,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         :return: Nothing
         """
         for bucket in self.buckets:
-            cb = self._get_python_sdk_client(self.master.ip, bucket, self.backupset.cluster_host)
+            cb = self._get_python_sdk_client(self.main.ip, bucket, self.backupset.cluster_host)
             for i in range(int(self.num_items * 0.7) + 1, self.num_items + 1):
                 cb.upsert("doc" + str(i), {"key": "value"}, ttl=self.expires)
         self.backup_cluster_validate()
@@ -2746,7 +2746,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         :return: Nothing
         """
         for bucket in self.buckets:
-            cb = self._get_python_sdk_client(self.master.ip, bucket, self.backupset.cluster_host)
+            cb = self._get_python_sdk_client(self.main.ip, bucket, self.backupset.cluster_host)
             for i in range(int(self.num_items * 0.7) + 1, self.num_items + 1):
                 cb.upsert("doc" + str(i), {"key": "value"}, ttl=self.expires)
         self.sleep(self.expires)
@@ -2934,7 +2934,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         Asynchronously rebalance the cluster.
         :return: The task that is rebalancing the nodes.
         """
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         # Get the nodes already in the backup cluster
         nodes_in_cluster = rest.node_statuses()
         # Get the nodes available for the backup_custer
@@ -2985,7 +2985,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         rest = RestConnection(self.backupset.cluster_host)
         nodes_all = rest.node_statuses()
         for x in nodes_all:
-            if x.ip == self.master.ip:
+            if x.ip == self.main.ip:
                 nodes_all.remove(x)
                 if len(nodes_all) == 0:
                     self.fail("No more node to failover.")
@@ -3136,7 +3136,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         :param num_new_buckets:
         :return: The new bucket size.
         """
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         ram_size = rest.get_nodes_self().memoryQuota
         bucket_size = self._get_bucket_size(ram_size, self.bucket_size +
                                             num_new_buckets)
@@ -3152,7 +3152,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         :return: Nothing
         """
         bucket_size = self._reconfigure_bucket_memory(self.new_buckets)
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         server_id = rest.get_nodes_self().id
         bucket_tasks = []
         bucket_params = copy.deepcopy(
@@ -3180,7 +3180,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
             bucket = CBBucket(name=name, authType=None, saslPassword=None,
                               num_replicas=self.num_replicas,
                               bucket_size=self.bucket_size,
-                              port=port, master_id=server_id,
+                              port=port, main_id=server_id,
                               eviction_policy='noEviction', lww=self.lww)
             self.buckets.append(bucket)
             standard_buckets.append(bucket)
@@ -3193,7 +3193,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
                 ['bucket' + str(i) for i in range(
                     self.new_buckets)])
         for bucket in standard_buckets:
-            self._load_bucket(bucket, self.master, self.initial_load_gen,
+            self._load_bucket(bucket, self.main, self.initial_load_gen,
                               "create", self.expires)
 
     def create_bucket_with_ops(self):
@@ -3203,7 +3203,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         """
         ops_tasks = self.async_ops_on_buckets()
         bucket_size = self._reconfigure_bucket_memory(self.new_buckets)
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         server_id = rest.get_nodes_self().id
         bucket_tasks = []
         bucket_params = copy.deepcopy(
@@ -3231,7 +3231,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
             bucket = Bucket(name=name, authType=None, saslPassword=None,
                             num_replicas=self.num_replicas,
                             bucket_size=self.bucket_size,
-                            port=port, master_id=server_id,
+                            port=port, main_id=server_id,
                             eviction_policy='noEviction', lww=self.lww)
             self.buckets.append(bucket)
             standard_buckets.append(bucket)
@@ -3246,7 +3246,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         for task in ops_tasks:
             task.result()
         for bucket in standard_buckets:
-            self._load_bucket(bucket, self.master, self.initial_load_gen,
+            self._load_bucket(bucket, self.main, self.initial_load_gen,
                               "create", self.expires)
 
     def delete_bucket(self):
@@ -3257,7 +3257,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         self.log.info("Deleting a bucket")
         bucket_to_delete = self.buckets[-1].name
         self.backupset.deleted_buckets.append(bucket_to_delete)
-        BucketOperationHelper.delete_bucket_or_assert(self.master,
+        BucketOperationHelper.delete_bucket_or_assert(self.main,
                                                       bucket_to_delete,
                                                       self)
         self.buckets.pop()
@@ -3271,10 +3271,10 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         self.log.info("Deleting a bucket")
         bucket_to_delete = self.buckets[-1].name
         self.backupset.deleted_buckets.append(bucket_to_delete)
-        BucketOperationHelper.delete_bucket_or_assert(self.master,
+        BucketOperationHelper.delete_bucket_or_assert(self.main,
                                                       bucket_to_delete,
                                                       self)
-        self.buckets = RestConnection(self.master).get_buckets()
+        self.buckets = RestConnection(self.main).get_buckets()
         for task in ops_tasks:
             task.result()
 
@@ -3320,7 +3320,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         :return: Nothing
         """
         self.log.info("Flushing {} buckets")
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         bucket_name = self.buckets[bucket_to_flush].name
         rest.flush_bucket(bucket_name)
         self.backupset.flushed_buckets.append(bucket_name)
@@ -3357,7 +3357,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         tasks = []
         for i in range(self.buckets.__len__() - self.bucket_to_flush,
                        self.buckets.__len__()):
-            self._load_bucket(self.buckets[i], self.master,
+            self._load_bucket(self.buckets[i], self.main,
                               self.initial_load_gen, "create", self.expires)
 
     def compact_buckets(self):
@@ -3391,7 +3391,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
             # Perform mutations on the bucket
             self.ops_on_buckets()
 
-            # Kill memcached on Node A so that Node B becomes master
+            # Kill memcached on Node A so that Node B becomes main
             shell = RemoteMachineShellConnection(self.backupset.cluster_host)
             shell.kill_memcached()
 
@@ -3621,7 +3621,7 @@ class EnterpriseBackupMergeBase(EnterpriseBackupRestoreBase):
         return self.bk_with_cb_server_stop_and_restart()
 
     def set_meta_purge_interval(self):
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         params = {}
         api = rest.baseUrl + "controller/setAutoCompaction"
         params["purgeInterval"] = 0.003

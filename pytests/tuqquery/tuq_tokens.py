@@ -13,7 +13,7 @@ class TokenTests(QueryTests):
         self.query_bucket = self.get_query_buckets(sample_buckets=[self.sample_bucket])[0]
 
     def tearDown(self):
-        # server = self.master
+        # server = self.main
         # shell = RemoteMachineShellConnection(server)
         #  shell.execute_command("""curl -X DELETE -u Administrator:password 
         #  http://{0}:8091/pools/default/buckets/beer-sample""".format(server.ip))

@@ -27,7 +27,7 @@ class AlternateAddressTests(AltAddrBaseTest):
         super(AlternateAddressTests, self).setUp()
         self.remove_all_alternate_address_settings()
         self.cluster_helper = Cluster()
-        self.ex_path = self.tmp_path + "export{0}/".format(self.master.ip)
+        self.ex_path = self.tmp_path + "export{0}/".format(self.main.ip)
         self.num_items = self.input.param("items", 1000)
         self.client_os = self.input.param("client_os", "linux")
         self.localhost = self.input.param("localhost", False)
@@ -123,11 +123,11 @@ class AlternateAddressTests(AltAddrBaseTest):
             except Exception as e:
                 if e:
                     self.fail("Error: {0}".format(e))
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         rest.rebalance(otpNodes=[node.id for node in rest.node_statuses()], ejectedNodes=[])
         rest.monitorRebalance()
         self.log.info("Create default bucket")
-        self._create_default_bucket(self.master)
+        self._create_default_bucket(self.main)
         buckets = rest.get_buckets()
         status = RestHelper(rest).vbucket_map_ready(buckets[0].name)
         if not status:
@@ -212,19 +212,19 @@ class AlternateAddressTests(AltAddrBaseTest):
         des_alt_addr_set = False
 
         self.log.info("Create bucket at source")
-        src_master = self.clusters_dic[0][0]
-        self._create_buckets(src_master)
-        src_rest = RestConnection(src_master)
+        src_main = self.clusters_dic[0][0]
+        self._create_buckets(src_main)
+        src_rest = RestConnection(src_main)
         src_buckets = src_rest.get_buckets()
         if src_buckets and src_buckets[0]:
             src_bucket_name = src_buckets[0].name
         else:
             self.fail("Failed to create bucket at src cluster")
 
-        des_master = self.clusters_dic[1][0]
+        des_main = self.clusters_dic[1][0]
         self.log.info("Create bucket at destination")
-        self._create_buckets(des_master)
-        des_rest = RestConnection(des_master)
+        self._create_buckets(des_main)
+        des_rest = RestConnection(des_main)
         des_buckets = des_rest.get_buckets()
         if des_buckets and des_buckets[0]:
             des_bucket_name = des_buckets[0].name
@@ -238,8 +238,8 @@ class AlternateAddressTests(AltAddrBaseTest):
                            internal_IP = internal_IP)
         self.all_alt_addr_set = True
 
-        self.kv_loader(src_master, "mac")
-        self.create_xdcr_reference(src_master.ip, des_master.ip)
+        self.kv_loader(src_main, "mac")
+        self.create_xdcr_reference(src_main.ip, des_main.ip)
 
         src_num_docs = int(src_rest.get_active_key_count(src_bucket_name))
         count = 0
@@ -255,17 +255,17 @@ class AlternateAddressTests(AltAddrBaseTest):
             if count == 2:
                 self.fail("bucket items does not set after 30 seconds")
 
-        self.create_xdcr_replication(src_master.ip, des_master.ip, src_bucket_name)
+        self.create_xdcr_replication(src_main.ip, des_main.ip, src_bucket_name)
         self.sleep(25, "time needed for replication to be created")
 
         self.log.info("Reduce check point time to 30 seconds")
-        self.set_xdcr_checkpoint(src_master.ip, 30)
-        #self.set_xdcr_checkpoint(des_master.ip, 30)
+        self.set_xdcr_checkpoint(src_main.ip, 30)
+        #self.set_xdcr_checkpoint(des_main.ip, 30)
 
         self.log.info("Get xdcr configs from cluster")
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         rep_id_cmd = "curl -u Administrator:password http://{0}:8091/pools/default/remoteClusters"\
-                                                                            .format(self.master.ip)
+                                                                            .format(self.main.ip)
         output, error = shell.execute_command(rep_id_cmd)
         output = output[0][1:-1]
         xdcr_config = json.loads(output)
@@ -308,7 +308,7 @@ class AlternateAddressTests(AltAddrBaseTest):
         self.log.info("Restart replication")
         cmd = "curl -X POST -u Administrator:password "
         cmd += "http://{0}:8091/settings/replications/{1}%2F{2}%2F{2} "\
-                 .format(self.master.ip, xdcr_config["uuid"], des_bucket_name)
+                 .format(self.main.ip, xdcr_config["uuid"], des_bucket_name)
         cmd += "-d pauseRequested="
         try:
             check_output(cmd + "true", shell=True, stderr=STDOUT)
@@ -318,7 +318,7 @@ class AlternateAddressTests(AltAddrBaseTest):
             print("Error return code: {0}".format(e.returncode))
             if e.output:
                 self.fail(e.output)
-        des_rest = RestConnection(des_master)
+        des_rest = RestConnection(des_main)
 
         self.log.info("Verify docs is replicated to des cluster")
         while count < 6:
@@ -333,7 +333,7 @@ class AlternateAddressTests(AltAddrBaseTest):
                 if des_alt_addr_set:
                     self.fail("Replication does not complete after 6 minutes")
 
-        self.delete_xdcr_replication(src_master.ip, xdcr_config["uuid"])
+        self.delete_xdcr_replication(src_main.ip, xdcr_config["uuid"])
 
     def remove_all_alternate_address_settings(self):
         self.log.info("Remove alternate address setting in each node")
@@ -359,7 +359,7 @@ class AlternateAddressTests(AltAddrBaseTest):
                                    secure_conn = ""):
         sub_command = "setting-alternate-address"
         if server is None:
-            server = self.master
+            server = self.main
         cmd = "{0}couchbase-cli{1} {2} -c http{3}://{4}:{5}{6} --username {7} --password {8} {9}"\
                     .format(self.cli_command_path, self.cmd_ext,
                             sub_command, url_format, server.ip, secure_port,
@@ -374,7 +374,7 @@ class AlternateAddressTests(AltAddrBaseTest):
     def list_alt_address(self, server=None, url_format = "", secure_port = "", secure_conn = ""):
         sub_command = "setting-alternate-address"
         if server is None:
-            server = self.master
+            server = self.main
         cmd = "{0}couchbase-cli{1} {2} -c http{3}://{4}:{5}{6} --username {7} --password {8} {9}"\
                     .format(self.cli_command_path, self.cmd_ext,
                             sub_command, url_format, server.ip, secure_port,
@@ -390,7 +390,7 @@ class AlternateAddressTests(AltAddrBaseTest):
                               secure_conn = "", internal_IP = ""):
         self.log.info("Start to set alternate address")
         if server is None:
-            server = self.master
+            server = self.main
         shell = RemoteMachineShellConnection(server)
         internal_IP = self.get_internal_IP(server)
         setting_cmd = "{0}couchbase-cli{1} {2}"\
@@ -431,7 +431,7 @@ class AlternateAddressTests(AltAddrBaseTest):
 
     def kv_loader(self, server = None, client_os = "linux"):
         if server is None:
-            server = self.master
+            server = self.main
         buckets = RestConnection(server).get_buckets()
         base_path = "/opt/couchbase/bin/"
         if client_os == "mac":
@@ -461,7 +461,7 @@ class AlternateAddressTests(AltAddrBaseTest):
     def n1ql_query(self, server_IP = None, client_os = "linux",
                    create_travel_sample_bucket=False):
         if server_IP is None:
-            server_IP = self.master.ip
+            server_IP = self.main.ip
 
         self._create_travel_sample_bucket(server_IP,
                                           create_travel_sample_bucket=create_travel_sample_bucket)
@@ -503,7 +503,7 @@ class AlternateAddressTests(AltAddrBaseTest):
     def create_eventing_function(self, server = None, client_os = "linux",
                    create_travel_sample_bucket=False):
         if server is None:
-            server_IP = self.master.ip
+            server_IP = self.main.ip
         else:
             server_IP = server.ip
 
@@ -546,7 +546,7 @@ class AlternateAddressTests(AltAddrBaseTest):
 
     def _create_buckets(self, server, num_buckets=1):
         if server is None:
-            server = self.master
+            server = self.main
         create_bucket_command = """ curl -g -u Administrator:password \
                       http://{0}:8091/pools/default/buckets \
                       -d ramQuotaMB=256 -d authType=sasl -d replicaNumber=1 """.format(server.ip)
@@ -577,7 +577,7 @@ class AlternateAddressTests(AltAddrBaseTest):
 
     def _create_default_bucket(self, server):
         if server is None:
-            server = self.master
+            server = self.main
         create_bucket_command = """ curl -g -u Administrator:password \
                       http://{0}:8091/pools/default/buckets -d name=default \
                       -d ramQuotaMB=256 -d authType=sasl -d replicaNumber=1 """.format(server.ip)

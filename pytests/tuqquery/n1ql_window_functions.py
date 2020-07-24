@@ -2036,7 +2036,7 @@ class WindowFunctionsTest(QueryTests):
     '''
 
     def test_prepared_statements(self):
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
 
         # ------------------ create prepareds -----------------------
         for k, v in self.window_functions.items():
@@ -2044,7 +2044,7 @@ class WindowFunctionsTest(QueryTests):
                    "statement='prepare prepared_" + v['name'] + " from select decimal_field, " +
                    self._construct_window_function_call(v) +
                    "  as wf_result from {0} where char_field in $1 order by "
-                   "char_field'").format('Administrator', 'password', self.master.ip, self.curl_path)
+                   "char_field'").format('Administrator', 'password', self.main.ip, self.curl_path)
             shell.execute_command(cmd)
 
         for k, v in self.aggregate_functions.items():
@@ -2052,7 +2052,7 @@ class WindowFunctionsTest(QueryTests):
                    "statement='prepare prepared_" + v['name'] +
                    " from select decimal_field, " + self._construct_window_function_call(v) +
                    "  as wf_result from {0} where char_field in $1 order by "
-                   "char_field'").format('Administrator', 'password', self.master.ip, self.curl_path)
+                   "char_field'").format('Administrator', 'password', self.main.ip, self.curl_path)
             shell.execute_command(cmd)
 
         # -------------- execute prepareds -----------------------
@@ -2060,7 +2060,7 @@ class WindowFunctionsTest(QueryTests):
             cmd = ("{3} -u {0}:{1} http://{2}:8093/query/service -d "
                    "statement='execute prepared_" + v['name'] + "&args=[[\"A\",\"B\",\"C\",\"D\",\"E\"]]'"
                    ). \
-                format('Administrator', 'password', self.master.ip, self.curl_path)
+                format('Administrator', 'password', self.main.ip, self.curl_path)
 
             output, error = shell.execute_command(cmd)
             json_output_str = ''
@@ -2076,7 +2076,7 @@ class WindowFunctionsTest(QueryTests):
             cmd = ("{3} -u {0}:{1} http://{2}:8093/query/service -d "
                    "statement='execute prepared_" + v['name'] + "&args=[[\"A\",\"B\",\"C\",\"D\",\"E\"]]'"
                    ). \
-                format('Administrator', 'password', self.master.ip, self.curl_path)
+                format('Administrator', 'password', self.main.ip, self.curl_path)
 
             output, error = shell.execute_command(cmd)
             json_output_str = ''
@@ -2095,13 +2095,13 @@ class WindowFunctionsTest(QueryTests):
 
     def test_parameterized_positional(self):
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d ""statement='select 2*$1&args" \
-              "=[3]'".format('Administrator', 'password', self.master.ip, self.curl_path)
+              "=[3]'".format('Administrator', 'password', self.main.ip, self.curl_path)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is simple test")
 
         cmd = ("{3} -u {0}:{1} http://{2}:8093/query/service -d "
                "statement='select decimal_field, ntile($1) over(partition by char_field order by char_field) as"
-               " wf_result from {4}&args=[2]'").format('Administrator', 'password', self.master.ip,
+               " wf_result from {4}&args=[2]'").format('Administrator', 'password', self.main.ip,
                                                        self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is NTILE")
@@ -2109,28 +2109,28 @@ class WindowFunctionsTest(QueryTests):
         cmd = ("{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, "
                "first_value(decimal_field) over(partition by char_field  order by char_field groups between "
                "unbounded preceding and $1 following) as wf_result from"
-               " {4}&args=[2]'").format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+               " {4}&args=[2]'").format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is FIRST_VALUE")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " \
               "ratio_to_report(decimal_field) over(partition by char_field  " \
               "order by char_field groups between unbounded preceding and $1 following) as wf_result from " \
-              "{4}&args=[2]'".format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+              "{4}&args=[2]'".format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is RATIO_TO_REPORT")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " \
               "last_value(decimal_field) over(partition by char_field  order by char_field groups " \
               "between unbounded preceding and $1 following) as wf_result from " \
-              "{4}&args=[2]'".format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+              "{4}&args=[2]'".format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is LAST_VALUE")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " \
               "nth_value(decimal_field, $1) over(partition by char_field  order by char_field groups between " \
               "unbounded preceding and $2 following) as wf_result from " \
-              "{4}&args=[2,3]'".format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+              "{4}&args=[2,3]'".format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is NTH_VALUE")
 
@@ -2138,7 +2138,7 @@ class WindowFunctionsTest(QueryTests):
             cmd = ("{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " + v['name'] +
                    "(decimal_field) over(partition by char_field  order by char_field groups between unbounded "
                    "preceding and $1 following) as wf_result from {4}&args=[2]'").format('Administrator', 'password',
-                                                                                         self.master.ip, self.curl_path,
+                                                                                         self.main.ip, self.curl_path,
                                                                                          self.query_bucket)
             res = self._execute_and_check_shell_query(cmd)
             self.assertEqual(res, True, "Test is failed. Function name is " + v['name'])
@@ -2150,41 +2150,41 @@ class WindowFunctionsTest(QueryTests):
 
     def test_parameterized_named(self):
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select " \
-              "2*$param&$param=3'".format('Administrator', 'password', self.master.ip, self.curl_path)
+              "2*$param&$param=3'".format('Administrator', 'password', self.main.ip, self.curl_path)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is simple test")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, ntile($param) " \
               "over(partition by char_field order by char_field) as wf_result from " \
-              "{4}&$param=2'".format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+              "{4}&$param=2'".format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is NTILE")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " \
               "first_value(decimal_field) over(partition by char_field  order by char_field groups between " \
               "unbounded preceding and $param following) as wf_result from " \
-              "{4}&$param=2'".format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+              "{4}&$param=2'".format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is FIRST_VALUE")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " \
               "ratio_to_report(decimal_field) over(partition by char_field  order by char_field groups between " \
               "unbounded preceding and $param following) as wf_result from " \
-              "{4}&$param=2'".format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+              "{4}&$param=2'".format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is RATIO_TO_REPORT")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " \
               "last_value(decimal_field) over(partition by char_field  order by char_field groups between unbounded " \
               "preceding and $param following) as wf_result from " \
-              "{4}&$param=2'".format('Administrator', 'password', self.master.ip, self.curl_path, self.query_bucket)
+              "{4}&$param=2'".format('Administrator', 'password', self.main.ip, self.curl_path, self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is LAST_VALUE")
 
         cmd = "{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " \
               "nth_value(decimal_field, $param1) over(partition by char_field  order by char_field groups between " \
               "unbounded preceding and $param2 following) as wf_result from " \
-              "{4}&$param1=2&$param2=3'".format('Administrator', 'password', self.master.ip, self.curl_path,
+              "{4}&$param1=2&$param2=3'".format('Administrator', 'password', self.main.ip, self.curl_path,
                                                 self.query_bucket)
         res = self._execute_and_check_shell_query(cmd)
         self.assertEqual(res, True, "Test is failed. Function name is NTH_VALUE")
@@ -2193,7 +2193,7 @@ class WindowFunctionsTest(QueryTests):
             cmd = ("{3} -u {0}:{1} http://{2}:8093/query/service -d statement='select decimal_field, " + v['name'] +
                    "(decimal_field) over(partition by char_field  order by char_field groups between unbounded "
                    "preceding and $param following) as wf_result from "
-                   "{4}&$param=2'").format('Administrator', 'password', self.master.ip,
+                   "{4}&$param=2'").format('Administrator', 'password', self.main.ip,
                                            self.curl_path, self.query_bucket)
             res = self._execute_and_check_shell_query(cmd)
             self.assertEqual(res, True, "Test is failed. Function name is " + v['name'])
@@ -2241,7 +2241,7 @@ class WindowFunctionsTest(QueryTests):
         self.query_runner(test_dict)
 
     def _execute_and_check_shell_query(self, cmd):
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         output, error = shell.execute_command(cmd)
         json_output_str = ''
         for s in output:
@@ -2255,7 +2255,7 @@ class WindowFunctionsTest(QueryTests):
         return v['name'] + v['params'] + " over(" + v['partition'] + " " + v['order'] + " " + v['range'] + ")"
 
     def init_nodes(self):
-        test_bucket_params = self._create_bucket_params(server=self.master, size=self.bucket_size,
+        test_bucket_params = self._create_bucket_params(server=self.main, size=self.bucket_size,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)

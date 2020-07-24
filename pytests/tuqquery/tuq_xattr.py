@@ -999,7 +999,7 @@ class QueryXattrTests(QueryTests):
 
         try:
             # failover the indexer node
-            failover_task = self.cluster.async_failover([self.master], failover_nodes=[index_server], graceful=False)
+            failover_task = self.cluster.async_failover([self.main], failover_nodes=[index_server], graceful=False)
             failover_task.result()
             self.sleep(30)
             # do a full recovery and rebalance
@@ -1053,7 +1053,7 @@ class QueryXattrTests(QueryTests):
         self.sleep(30)
         try:
             # failover the indexer node
-            failover_task = self.cluster.async_failover([self.master], failover_nodes=[index_server], graceful=True)
+            failover_task = self.cluster.async_failover([self.main], failover_nodes=[index_server], graceful=True)
             self.run_xattrs_query(query, '', '_system3', 'idx8', self.default_bucket_name,
                                   xattr_data=self.system_xattr_data)
 
@@ -2521,7 +2521,7 @@ class QueryXattrTests(QueryTests):
     """
 
     def create_xattr_data(self, type="system"):
-        cluster = Cluster('couchbase://' + str(self.master.ip))
+        cluster = Cluster('couchbase://' + str(self.main.ip))
         authenticator = PasswordAuthenticator(self.username, self.password)
         cluster.authenticate(authenticator)
         cb = cluster.open_bucket(self.default_bucket_name)
@@ -2567,7 +2567,7 @@ class QueryXattrTests(QueryTests):
     """
 
     def write_xattr(self, doc_id, xattr_id, value):
-        cluster = Cluster('couchbase://' + str(self.master.ip))
+        cluster = Cluster('couchbase://' + str(self.main.ip))
         authenticator = PasswordAuthenticator(self.username, self.password)
         cluster.authenticate(authenticator)
         cb = cluster.open_bucket(self.default_bucket_name)
@@ -2583,7 +2583,7 @@ class QueryXattrTests(QueryTests):
     """
 
     def reload_data(self):
-        self._all_buckets_delete(self.master)
+        self._all_buckets_delete(self.main)
         self._bucket_creation()
         self.gens_load = self.gen_docs(self.docs_per_day)
         self.load(self.gens_load, batch_size=1000, flag=self.item_flag)

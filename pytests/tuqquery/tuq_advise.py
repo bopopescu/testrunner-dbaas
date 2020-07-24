@@ -60,7 +60,7 @@ class QueryAdviseTests(QueryTests):
     # Use advise statement on an update statement
     def test_update_advise(self):
         try:
-            results_simple = self.run_cbq_query(query="advise UPDATE `{0}` SET city = 'San Francisco' WHERE lower(city) = 'sanfrancisco'".format(self.bucket_name), server=self.master)
+            results_simple = self.run_cbq_query(query="advise UPDATE `{0}` SET city = 'San Francisco' WHERE lower(city) = 'sanfrancisco'".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_simple)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -69,7 +69,7 @@ class QueryAdviseTests(QueryTests):
             self.run_cbq_query(query=index)
             self.wait_for_all_indexes_online()
             try:
-                results_with_advise_index = self.run_cbq_query(query="UPDATE `{0}` SET city = 'SF' WHERE lower(city) = 'san francisco'".format(self.bucket_name), server=self.master)
+                results_with_advise_index = self.run_cbq_query(query="UPDATE `{0}` SET city = 'SF' WHERE lower(city) = 'san francisco'".format(self.bucket_name), server=self.main)
                 self.assertEqual(results_with_advise_index['status'], 'success')
                 self.assertEqual(results_with_advise_index['metrics']['mutationCount'], 938)
             finally:
@@ -79,7 +79,7 @@ class QueryAdviseTests(QueryTests):
     # Use advise on an update statement but the bucket doesn't exist
     def test_update_fake(self):
         try:
-            results_fake_field = self.run_cbq_query(query="advise UPDATE `fakebucket` SET fakey_field = 'fake' WHERE fakey_field = 'faker'", server=self.master)
+            results_fake_field = self.run_cbq_query(query="advise UPDATE `fakebucket` SET fakey_field = 'fake' WHERE fakey_field = 'faker'", server=self.main)
             fake_field_indexes = self.get_index_statements(results_fake_field)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -88,7 +88,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_delete_advise(self):
         try:
-            results_simple = self.run_cbq_query(query="advise DELETE FROM `{0}` WHERE country = 'France'".format(self.bucket_name), server=self.master)
+            results_simple = self.run_cbq_query(query="advise DELETE FROM `{0}` WHERE country = 'France'".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_simple)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -97,7 +97,7 @@ class QueryAdviseTests(QueryTests):
             self.run_cbq_query(query=index)
             self.wait_for_all_indexes_online()
             try:
-                results_with_advise_index = self.run_cbq_query(query="DELETE FROM `{0}` WHERE country = 'France'".format(self.bucket_name), server=self.master)
+                results_with_advise_index = self.run_cbq_query(query="DELETE FROM `{0}` WHERE country = 'France'".format(self.bucket_name), server=self.main)
                 self.assertEqual(results_with_advise_index['status'], 'success')
                 self.assertEqual(results_with_advise_index['metrics']['mutationCount'], 770)
             finally:
@@ -106,7 +106,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_delete_fake(self):
         try:
-            results_fake_field = self.run_cbq_query(query="advise DELETE FROM `fake_bucket` WHERE fake_field = 'Fake'", server=self.master)
+            results_fake_field = self.run_cbq_query(query="advise DELETE FROM `fake_bucket` WHERE fake_field = 'Fake'", server=self.main)
             fake_field_indexes = self.get_index_statements(results_fake_field)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -115,7 +115,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_delete(self):
         try:
-            results_simple = self.run_cbq_query(query="advise DELETE FROM `{0}` WHERE ((free_breakfast=true OR city is null)) OR (id <= '549')".format(self.bucket_name), server=self.master)
+            results_simple = self.run_cbq_query(query="advise DELETE FROM `{0}` WHERE ((free_breakfast=true OR city is null)) OR (id <= '549')".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_simple)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -124,7 +124,7 @@ class QueryAdviseTests(QueryTests):
             self.run_cbq_query(query=index)
             self.wait_for_all_indexes_online()
         try:
-            results_with_advise_index = self.run_cbq_query(query="DELETE FROM `{0}` WHERE ((free_breakfast=true OR city is null)) OR (id <= '549')".format(self.bucket_name), server=self.master)
+            results_with_advise_index = self.run_cbq_query(query="DELETE FROM `{0}` WHERE ((free_breakfast=true OR city is null)) OR (id <= '549')".format(self.bucket_name), server=self.main)
             self.assertEqual(results_with_advise_index['status'], 'success')
             self.assertEqual(results_with_advise_index['metrics']['mutationCount'], 31591)
         finally:
@@ -134,11 +134,11 @@ class QueryAdviseTests(QueryTests):
 
     def test_advise_index(self):
         try:
-            results_update = self.run_cbq_query(query="advise index UPDATE `{0}` SET city = 'San Francisco' WHERE lower(city) = 'sanfrancisco'".format(self.bucket_name), server=self.master)
+            results_update = self.run_cbq_query(query="advise index UPDATE `{0}` SET city = 'San Francisco' WHERE lower(city) = 'sanfrancisco'".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_update)
             self.assertTrue(len(simple_indexes) > 0, "No advise generated for an index with no created bucket!")
 
-            results_select = self.run_cbq_query(query="advise index SELECT city FROM `{0}` WHERE lower(city) = 'sanfrancisco'".format(self.bucket_name), server=self.master)
+            results_select = self.run_cbq_query(query="advise index SELECT city FROM `{0}` WHERE lower(city) = 'sanfrancisco'".format(self.bucket_name), server=self.main)
             select_indexes = self.get_index_statements(results_select)
             self.assertTrue(len(simple_indexes) > 0, "No advise generated for an index with no created bucket!")
 
@@ -150,7 +150,7 @@ class QueryAdviseTests(QueryTests):
         try:
             results_fake_field = self.run_cbq_query(
                 query="ADVISE MERGE INTO shellTest t USING [ {'id':'21728', 'vacancy': true} , {'id':'21730', 'vacancy': true} ] s ON t.id || 123 = s.id WHEN MATCHED THEN UPDATE SET t.old_vacancy = t.vacancy, t.vacancy = s.vacancy RETURNING meta(t).id",
-                server=self.master)
+                server=self.main)
             fake_field_indexes = self.get_index_statements(results_fake_field)
             for fake_indexes in fake_field_indexes:
                 self.assertTrue('`id`||123' in fake_indexes, "Index generated does not contain the correct fields: {0}".format(fake_indexes))
@@ -161,7 +161,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_meta_cas(self):
         try:
-            results_simple = self.run_cbq_query(query="advise select * from `{0}` t where meta(t).cas > 10 limit 100".format(self.bucket_name), server=self.master)
+            results_simple = self.run_cbq_query(query="advise select * from `{0}` t where meta(t).cas > 10 limit 100".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_simple)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -180,7 +180,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_meta_expiration(self):
         try:
-            results_simple = self.run_cbq_query(query="advise select * from `{0}` t where meta(t).expiration = 0 limit 100".format(self.bucket_name), server=self.master)
+            results_simple = self.run_cbq_query(query="advise select * from `{0}` t where meta(t).expiration = 0 limit 100".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_simple)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -199,7 +199,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_meta_expiration_cas_and(self):
         try:
-            results_simple = self.run_cbq_query(query="advise select meta().cas, meta().expiration from `{0}` t where meta(t).expiration = 0  and meta(t).cas > 10 limit 100".format(self.bucket_name), server=self.master)
+            results_simple = self.run_cbq_query(query="advise select meta().cas, meta().expiration from `{0}` t where meta(t).expiration = 0  and meta(t).cas > 10 limit 100".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_simple)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -218,7 +218,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_meta_expiration_cas_or(self):
         try:
-            results_simple = self.run_cbq_query(query="advise select meta().cas, meta().expiration from `{0}` t where meta(t).expiration = 1 OR meta(t).cas > 10 limit 100".format(self.bucket_name), server=self.master)
+            results_simple = self.run_cbq_query(query="advise select meta().cas, meta().expiration from `{0}` t where meta(t).expiration = 1 OR meta(t).cas > 10 limit 100".format(self.bucket_name), server=self.main)
             simple_indexes = self.get_index_statements(results_simple)
         except Exception as e:
             self.log.error("Advise statement failed: {0}".format(e))
@@ -241,7 +241,7 @@ class QueryAdviseTests(QueryTests):
     def test_syntax_error(self):
         try:
             self.run_cbq_query(
-                query="ADVISE select * from `{0}` wear x = y".format(self.bucket_name),server=self.master)
+                query="ADVISE select * from `{0}` wear x = y".format(self.bucket_name),server=self.main)
             self.log.error("Advise statement contains syntax error, should've thrown an error")
             self.fail()
         except Exception as e:
@@ -249,11 +249,11 @@ class QueryAdviseTests(QueryTests):
 
     # Test to make sure advise recognizes that the current indexes are sufficient
     def test_optimal_index(self):
-        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(type)".format(self.bucket_name), server=self.master)
+        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(type)".format(self.bucket_name), server=self.main)
         self.wait_for_all_indexes_online()
         try:
             results_field = self.run_cbq_query(
-                query="ADVISE select * from `{0}` where type = 'hotel'".format(self.bucket_name), server=self.master)
+                query="ADVISE select * from `{0}` where type = 'hotel'".format(self.bucket_name), server=self.main)
             self.assertEqual(results_field['results'][0]['advice']['adviseinfo']['current_indexes'][0]['index_status'], 'SAME TO THE INDEX WE CAN RECOMMEND')
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -263,12 +263,12 @@ class QueryAdviseTests(QueryTests):
 
     # Test to see if advise will recommend a better single index, instead of two
     def test_suboptimal_indexes(self):
-        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(type)".format(self.bucket_name), server=self.master)
-        self.run_cbq_query(query="CREATE INDEX idx2 on `{0}`(callsign)".format(self.bucket_name), server=self.master)
+        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(type)".format(self.bucket_name), server=self.main)
+        self.run_cbq_query(query="CREATE INDEX idx2 on `{0}`(callsign)".format(self.bucket_name), server=self.main)
         self.wait_for_all_indexes_online()
         try:
             results_field = self.run_cbq_query(
-                query="ADVISE select type, callsign from `{0}` where type = 'airline' and callsign = 'MILE-AIR'".format(self.bucket_name), server=self.master)
+                query="ADVISE select type, callsign from `{0}` where type = 'airline' and callsign = 'MILE-AIR'".format(self.bucket_name), server=self.main)
             self.assertEqual(results_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'], "CREATE INDEX adv_callsign_type ON `{0}`(`callsign`) WHERE `type` = 'airline'".format(self.bucket_name))
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -279,11 +279,11 @@ class QueryAdviseTests(QueryTests):
 
     # Test an advise on a skip range scan
     def test_skip_range_key(self):
-        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(a,b,d,e)".format(self.bucket_name), server=self.master)
+        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(a,b,d,e)".format(self.bucket_name), server=self.main)
         self.wait_for_all_indexes_online()
         try:
             results_field = self.run_cbq_query(
-                query="ADVISE select a,d from `{0}` where a>0 and d>0".format(self.bucket_name), server=self.master)
+                query="ADVISE select a,d from `{0}` where a>0 and d>0".format(self.bucket_name), server=self.main)
             self.assertTrue('THIS IS AN OPTIMAL COVERING INDEX' in results_field['results'][0]['advice']['adviseinfo']['current_indexes'][0]['index_status'], "Index should've been optimal: {0}".format(results_field['results'][0]['advice']['adviseinfo']['current_indexes'][0]['index_status']))
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -295,7 +295,7 @@ class QueryAdviseTests(QueryTests):
     def test_aggregate_query(self):
         try:
             results_field = self.run_cbq_query(
-                query="advise select sum(a), min(d) from `{0}` where a > 0 and d >0".format(self.bucket_name), server=self.master)
+                query="advise select sum(a), min(d) from `{0}` where a > 0 and d >0".format(self.bucket_name), server=self.main)
             self.assertTrue(results_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'] == 'CREATE INDEX adv_d_a ON `{0}`(`d`,`a`)'.format(self.bucket_name) or results_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'] == 'CREATE INDEX adv_a_d ON `{0}`(`a`,`d`)'.format(self.bucket_name))
             self.assertEqual(results_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_property'], 'FULL GROUPBY & AGGREGATES pushdown, GROUPBY & AGGREGATES pushdown')
         except Exception as e:
@@ -306,7 +306,7 @@ class QueryAdviseTests(QueryTests):
     def test_advise_subquery(self):
         try:
             results_field = self.run_cbq_query(
-                query="advise select t3.type from (select t2.type from `{0}` t2 where t2.type = 'airline') t3".format(self.bucket_name), server=self.master)
+                query="advise select t3.type from (select t2.type from `{0}` t2 where t2.type = 'airline') t3".format(self.bucket_name), server=self.main)
             self.assertEqual(results_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'], 'CREATE INDEX adv_type ON `{0}`(`type`)'.format(self.bucket_name))
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -316,7 +316,7 @@ class QueryAdviseTests(QueryTests):
     def test_advise_join(self):
         try:
             results_fake_field = self.run_cbq_query(
-                query="advise select t1.type from `{0}` t1 INNER JOIN `{0}` t2 ON (t1.type = t2.type) limit 10".format(self.bucket_name), server=self.master)
+                query="advise select t1.type from `{0}` t1 INNER JOIN `{0}` t2 ON (t1.type = t2.type) limit 10".format(self.bucket_name), server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['index_statement'], 'CREATE INDEX adv_type ON `{0}`(`type`)'.format(self.bucket_name))
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -324,24 +324,24 @@ class QueryAdviseTests(QueryTests):
 
     # Test a join that requires multiple indexes
     def test_advise_join_multiple_indexes(self):
-        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(type)".format(self.bucket_name), server=self.master)
+        self.run_cbq_query(query="CREATE INDEX idx on `{0}`(type)".format(self.bucket_name), server=self.main)
         self.wait_for_all_indexes_online()
         try:
             results_fake_field = self.run_cbq_query(
-                query="advise select t1.type from `{0}` t1 INNER JOIN `{0}` t2 ON (t1.type = t2.type) INNER JOIN `fake_bucket` t3 ON (t2.callsign = t3.callsign) limit 10".format(self.bucket_name), server=self.master)
+                query="advise select t1.type from `{0}` t1 INNER JOIN `{0}` t2 ON (t1.type = t2.type) INNER JOIN `fake_bucket` t3 ON (t2.callsign = t3.callsign) limit 10".format(self.bucket_name), server=self.main)
             self.assertTrue( 'CREATE INDEX adv_type_callsign ON `{0}`(`type`,`callsign`)'.format(self.bucket_name) in str(results_fake_field), "The index is not found in the advise: {0}".format(str(results_fake_field)))
             self.assertTrue('CREATE INDEX adv_callsign ON `fake_bucket`(`callsign`)' in str(results_fake_field), "The index is not found in the advise: {0}".format(str(results_fake_field)))
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
             self.fail()
         finally:
-            self.run_cbq_query(query="DROP INDEX`{0}`.idx".format(self.bucket_name), server=self.master)
+            self.run_cbq_query(query="DROP INDEX`{0}`.idx".format(self.bucket_name), server=self.main)
 
     # Should not get an index recommendation for system:keyspaces
     def test_advise_keyspace(self):
         try:
             results_fake_field = self.run_cbq_query(
-                query="advise select * from system:keyspaces".format(self.bucket_name), server=self.master)
+                query="advise select * from system:keyspaces".format(self.bucket_name), server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes'], 'No index recommendation at this time.')
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -351,7 +351,7 @@ class QueryAdviseTests(QueryTests):
     def test_advise_alias(self):
         try:
             results_fake_field = self.run_cbq_query(
-                query="advise select * from `{0}` t where t.type = 'airline'".format(self.bucket_name), server=self.master)
+                query="advise select * from `{0}` t where t.type = 'airline'".format(self.bucket_name), server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['keyspace_alias'], 'travel-sample_t')
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -362,7 +362,7 @@ class QueryAdviseTests(QueryTests):
         field_list = ['`primary_key_id`','`int_field1`','`bool_field1`','`decimal_field1`']
         try:
             results_fake_field = self.run_cbq_query(
-                query="advise SELECT t_1.int_field1 , t_1.decimal_field1 , t_1.primary_key_id , t_1.bool_field1 FROM bucket_01 t_1 INNER JOIN bucket_04 t_4 ON ( t_1.primary_key_id = t_4.primary_key_id ) INNER JOIN bucket_04 t_5 ON ( t_1.primary_key_id = t_5.primary_key_id );", server=self.master)
+                query="advise SELECT t_1.int_field1 , t_1.decimal_field1 , t_1.primary_key_id , t_1.bool_field1 FROM bucket_01 t_1 INNER JOIN bucket_04 t_4 ON ( t_1.primary_key_id = t_4.primary_key_id ) INNER JOIN bucket_04 t_5 ON ( t_1.primary_key_id = t_5.primary_key_id );", server=self.main)
             for field in field_list:
                 self.assertTrue(field in
                                 results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'].format(field))
@@ -374,10 +374,10 @@ class QueryAdviseTests(QueryTests):
     def test_advise_no_error(self):
         try:
             results_fake_field = self.run_cbq_query(
-                query="advise SELECT lang, SUM(purchaseLittle) as totalLittle, SUM(purchaseGreat) AS totalGreat, SUM(purchaseSome) AS totalSome, SUM(purchaseGreat) / SUM(purchaseLittle) AS difference FROM default s UNNEST SPLIT(s.LanguageWorkedWith, ';') lang LET purchaseLittle = CASE WHEN s.PurchaseWhat LIKE 'I have little%' THEN 1 ELSE 0 END, purchaseGreat = CASE WHEN s.PurchaseWhat LIKE 'I have a great%' THEN 1 ELSE 0 END, purchaseSome = CASE WHEN s.PurchaseWhat LIKE 'I have some%' THEN 1 ELSE 0 END WHERE s.PurchaseWhat != 'NA' AND lang != 'NA' group by lang order by SUM(purchaseGreat) / SUM(purchaseLittle) desc", server=self.master)
+                query="advise SELECT lang, SUM(purchaseLittle) as totalLittle, SUM(purchaseGreat) AS totalGreat, SUM(purchaseSome) AS totalSome, SUM(purchaseGreat) / SUM(purchaseLittle) AS difference FROM default s UNNEST SPLIT(s.LanguageWorkedWith, ';') lang LET purchaseLittle = CASE WHEN s.PurchaseWhat LIKE 'I have little%' THEN 1 ELSE 0 END, purchaseGreat = CASE WHEN s.PurchaseWhat LIKE 'I have a great%' THEN 1 ELSE 0 END, purchaseSome = CASE WHEN s.PurchaseWhat LIKE 'I have some%' THEN 1 ELSE 0 END WHERE s.PurchaseWhat != 'NA' AND lang != 'NA' group by lang order by SUM(purchaseGreat) / SUM(purchaseLittle) desc", server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['index_statement'], "CREATE INDEX adv_ALL_split_s_LanguageWorkedWith_PurchaseWhat ON `default`(ALL split((`LanguageWorkedWith`), ';'),`PurchaseWhat`)")
             results_fake_field = self.run_cbq_query(
-                query='advise SELECT RAW email FROM sample_data data UNNEST data.`identity`.`Contact`.`Emails` email WHERE (data.`type`="links") AND (data.`owner`="AA") AND email LIKE $pfx GROUP BY email HAVING COUNT(meta(data).id) > 20', server=self.master)
+                query='advise SELECT RAW email FROM sample_data data UNNEST data.`identity`.`Contact`.`Emails` email WHERE (data.`type`="links") AND (data.`owner`="AA") AND email LIKE $pfx GROUP BY email HAVING COUNT(meta(data).id) > 20', server=self.main)
             self.assertTrue(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['index_statement'] == "CREATE INDEX adv_ALL_identity_Contact_Emails_type_owner ON `sample_data`(ALL ((`identity`).`Contact`).`Emails`,`type`,`owner`)" or results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['index_statement'] == "CREATE INDEX adv_ALL_identity_Contact_Emails_owner_type ON `sample_data`(ALL ((`identity`).`Contact`).`Emails`,`owner`,`type`)")
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -385,7 +385,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_param_advise(self):
         try:
-            results_fake_field = self.run_cbq_query(query="advise select name, pro_account from default where country=$1 and name is not null order by country desc", server=self.master)
+            results_fake_field = self.run_cbq_query(query="advise select name, pro_account from default where country=$1 and name is not null order by country desc", server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'], "CREATE INDEX adv_countryDESC_name_pro_account ON `default`(`country` DESC,`name`,`pro_account`)")
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_property'], "ORDER pushdown")
         except Exception as e:
@@ -394,7 +394,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_is_missing(self):
         try:
-            results_fake_field = self.run_cbq_query(query="advise SELECT name, val FROM bucket1 where type = 'configurations' and (components in ['x'] or components is missing)", server=self.master)
+            results_fake_field = self.run_cbq_query(query="advise SELECT name, val FROM bucket1 where type = 'configurations' and (components in ['x'] or components is missing)", server=self.main)
             self.assertTrue(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'] == "CREATE INDEX adv_type_components_name_val ON `bucket1`(`type`,`components`,`name`,`val`)" or results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'] == "CREATE INDEX adv_type_components_val_name ON `bucket1`(`type`,`components`,`val`,`name`)")
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -403,7 +403,7 @@ class QueryAdviseTests(QueryTests):
     # Bugged test case, need to revisit when MB-39786 is fixed
     def test_no_dup_keys(self):
         try:
-            results_fake_field = self.run_cbq_query(query="ADVISE SELECT a, b, c, sum(d), avg(d) FROM tutorial t WHERE t.d = 10 and t.b > 20 and t.c < 30 and t.d between 40 and 50 and (ANY x in t.p satisfies x = 100 end) GROUP BY a, b, c ORDER BY a, b DESC LIMIT 1 OFFSET 1", server=self.master)
+            results_fake_field = self.run_cbq_query(query="ADVISE SELECT a, b, c, sum(d), avg(d) FROM tutorial t WHERE t.d = 10 and t.b > 20 and t.c < 30 and t.d between 40 and 50 and (ANY x in t.p satisfies x = 100 end) GROUP BY a, b, c ORDER BY a, b DESC LIMIT 1 OFFSET 1", server=self.main)
             self.assertTrue(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'] == "CREATE INDEX adv_type_components_name_val ON `bucket1`(`type`,`components`,`name`,`val`)" or results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'] == "CREATE INDEX adv_type_components_val_name ON `bucket1`(`type`,`components`,`val`,`name`)")
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -411,7 +411,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_unnest(self):
         try:
-            results_fake_field = self.run_cbq_query(query="advise SELECT * FROM product UNNEST product.categories AS cat WHERE LOWER(cat) = 'golf' LIMIT 10 OFFSET 10", server=self.master)
+            results_fake_field = self.run_cbq_query(query="advise SELECT * FROM product UNNEST product.categories AS cat WHERE LOWER(cat) = 'golf' LIMIT 10 OFFSET 10", server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['index_statement'], "CREATE INDEX adv_ALL_categories_lower_cat ON `product`(ALL ARRAY lower(`cat`) FOR cat IN `categories` END)")
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -419,7 +419,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_merge_bug(self):
         try:
-            results_fake_field = self.run_cbq_query(query='advise merge into shellTest a2 using shellTest a1 on a1.c12=a2.c22 and a1.test_id = "advise" when matched then update set a2.type = "matched";', server=self.master)
+            results_fake_field = self.run_cbq_query(query='advise merge into shellTest a2 using shellTest a1 on a1.c12=a2.c22 and a1.test_id = "advise" when matched then update set a2.type = "matched";', server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['index_statement'], "CREATE INDEX adv_test_id ON `shellTest`(`test_id`)")
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][1]['index_statement'], "CREATE INDEX adv_c22 ON `shellTest`(`c22`)")
 
@@ -430,7 +430,7 @@ class QueryAdviseTests(QueryTests):
     def test_array_func(self):
         field_list =['`roomType`','DISTINCT ARRAY [`s`.`level`, `s`.`size`, `s`.`num`] FOR s in `rooms` END','`guestCode`','`startTime`','`endTime`','array_distinct(ifmissing((array_star((`rooms`)).`num`), []))']
         try:
-            results_fake_field = self.run_cbq_query(query="advise SELECT META(p).id, ARRAY_DISTINCT(IFMISSING(rooms[*].num,[])) FROM `travel-sample` AS p WHERE type = 'hotel' AND (guestCode = IFNULL($guestCode, '') OR guestCode = '') AND (roomType = IFNULL($roomType,'R') OR roomType = IFNULL($roomType,'D') ) AND ($checkinTime BETWEEN startTime AND endTime) AND (ANY s IN rooms SATISFIES [s.level,s.size, s.num] = [$level, $size, $num] END)", server=self.master)
+            results_fake_field = self.run_cbq_query(query="advise SELECT META(p).id, ARRAY_DISTINCT(IFMISSING(rooms[*].num,[])) FROM `travel-sample` AS p WHERE type = 'hotel' AND (guestCode = IFNULL($guestCode, '') OR guestCode = '') AND (roomType = IFNULL($roomType,'R') OR roomType = IFNULL($roomType,'D') ) AND ($checkinTime BETWEEN startTime AND endTime) AND (ANY s IN rooms SATISFIES [s.level,s.size, s.num] = [$level, $size, $num] END)", server=self.main)
             for field in field_list:
                 self.assertTrue(field in results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'], "The field is missing from the recommended index: {0}".format(field))
         except Exception as e:
@@ -439,7 +439,7 @@ class QueryAdviseTests(QueryTests):
 
     def test_is_missing(self):
         try:
-            results_fake_field = self.run_cbq_query(query="advise select sum(d) from default where a = 10 and b is missing group by c", server=self.master)
+            results_fake_field = self.run_cbq_query(query="advise select sum(d) from default where a = 10 and b is missing group by c", server=self.main)
             self.assertEqual(results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['covering_indexes'][0]['index_statement'], "CREATE INDEX adv_a_b_c_d ON `default`(`a`,`b`,`c`,`d`)")
         except Exception as e:
             self.log.info("Advise statement failed: {0}".format(e))
@@ -448,7 +448,7 @@ class QueryAdviseTests(QueryTests):
     def test_user_generated_advise(self):
         field_list =['`status`','`type`','DISTINCT ARRAY `v`.`key` FOR v in `operationContext` END','`userRef`.`name`','`startTime`']
         try:
-            results_fake_field = self.run_cbq_query(query='ADVISE SELECT result.* FROM (SELECT meta().id, startTime FROM `processMonitoring` WHERE type = "ProcessMonitorDTO"  AND status = "Running" AND userRef.name LIKE "fir%" AND ANY v IN operationContext SATISFIES v.`key` IN ["SITE_ID::ISite_100","SITE_ID::ISite_101"] END INTERSECT SELECT meta().id, startTime FROM `processMonitoring`  WHERE type = "ProcessMonitorDTO"  AND status = "Running" AND userRef.name LIKE "fir%" AND ANY v IN operationContext SATISFIES v.`key` ="FWAId::IFrameworkAgreement_100" END) AS result ORDER BY startTime ASC LIMIT 10 OFFSET 0', server=self.master)
+            results_fake_field = self.run_cbq_query(query='ADVISE SELECT result.* FROM (SELECT meta().id, startTime FROM `processMonitoring` WHERE type = "ProcessMonitorDTO"  AND status = "Running" AND userRef.name LIKE "fir%" AND ANY v IN operationContext SATISFIES v.`key` IN ["SITE_ID::ISite_100","SITE_ID::ISite_101"] END INTERSECT SELECT meta().id, startTime FROM `processMonitoring`  WHERE type = "ProcessMonitorDTO"  AND status = "Running" AND userRef.name LIKE "fir%" AND ANY v IN operationContext SATISFIES v.`key` ="FWAId::IFrameworkAgreement_100" END) AS result ORDER BY startTime ASC LIMIT 10 OFFSET 0', server=self.main)
             for field in field_list:
                 self.assertTrue(field in
                                 results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes'][
@@ -462,7 +462,7 @@ class QueryAdviseTests(QueryTests):
         field_list1 =['`type`','`type_`','`effectiveDate`','`policy`.`id`']
         field_list2 =['`type_`','`policy`.`id`','to_number((`loadingPremium`))','to_number((`installmentPremium`))']
         try:
-            results_fake_field = self.run_cbq_query(query="ADVISE select q1.PolID as PolicyID, SUM(((q1.POLoadPrem) + (q1.POInstPrem) + (q1.PCOLoadPrem) + (q1.PCOInstPrem)) * (q1.FreqValue)) as TotalPremium from (select meta(pol).id as PolID, TO_NUMBER(pol.paymentOption.frequency) as Freq, TO_NUMBER(po.installmentPremium) as POInstPrem, TO_NUMBER(po.loadingPremium) as POLoadPrem, TO_NUMBER(pco.installmentPremium) as PCOInstPrem, TO_NUMBER(pco.loadingPremium) as PCOLoadPrem, CASE WHEN pol.paymentOption.frequency == 'ANNUAL' THEN 1 WHEN pol.paymentOption.frequency == 'SEMI-ANNUAL' THEN 2 WHEN pol.paymentOption.frequency == 'QUARTERLY' THEN 4 WHEN pol.paymentOption.frequency == 'MONTHLY' THEN 12 WHEN pol.paymentOption.frequency == 'SINGLE' THEN 0.1 END AS FreqValue from data td join data pol on td.policy.id = meta(pol).id join data po on td.policy.id = po.policy.id join data pco on td.policy.id = pco.policy.id where td.type_ = 'TransactionDetail' and pol.type_ = 'Policy' and po.type_ = 'ProductOption' and pco.type_ = 'ProductComponentOption' and td.type = 'NEWCONTRACTPROPOSAL' and td.effectiveDate = '2019-12-13' and pol.status = 'INFORCE' ) q1 group by q1.PolID", server=self.master)
+            results_fake_field = self.run_cbq_query(query="ADVISE select q1.PolID as PolicyID, SUM(((q1.POLoadPrem) + (q1.POInstPrem) + (q1.PCOLoadPrem) + (q1.PCOInstPrem)) * (q1.FreqValue)) as TotalPremium from (select meta(pol).id as PolID, TO_NUMBER(pol.paymentOption.frequency) as Freq, TO_NUMBER(po.installmentPremium) as POInstPrem, TO_NUMBER(po.loadingPremium) as POLoadPrem, TO_NUMBER(pco.installmentPremium) as PCOInstPrem, TO_NUMBER(pco.loadingPremium) as PCOLoadPrem, CASE WHEN pol.paymentOption.frequency == 'ANNUAL' THEN 1 WHEN pol.paymentOption.frequency == 'SEMI-ANNUAL' THEN 2 WHEN pol.paymentOption.frequency == 'QUARTERLY' THEN 4 WHEN pol.paymentOption.frequency == 'MONTHLY' THEN 12 WHEN pol.paymentOption.frequency == 'SINGLE' THEN 0.1 END AS FreqValue from data td join data pol on td.policy.id = meta(pol).id join data po on td.policy.id = po.policy.id join data pco on td.policy.id = pco.policy.id where td.type_ = 'TransactionDetail' and pol.type_ = 'Policy' and po.type_ = 'ProductOption' and pco.type_ = 'ProductComponentOption' and td.type = 'NEWCONTRACTPROPOSAL' and td.effectiveDate = '2019-12-13' and pol.status = 'INFORCE' ) q1 group by q1.PolID", server=self.main)
             for field in field_list1:
                 self.assertTrue(field in
                                 results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes'][
@@ -483,7 +483,7 @@ class QueryAdviseTests(QueryTests):
         field_list3 =['ALL `details`','`type`','`storeId`','lower(((`transactionUser`).`name`))']
         field_list4 =['ALL `details`','`type`','`storeId`']
         try:
-            results_fake_field = self.run_cbq_query(query="ADVISE SELECT parent.id, parent.createdDate, parent.drawer.name, parent.transactionUser.name as userName, currencyDetails.currencyCode, currencyDetails.totalValue, store[0].name AS storeName FROM TransactionManager AS parent UNNEST parent.details AS currencyDetails LET store = ARRAY node FOR node IN parent.nodeStructure WHEN node.nodeType= 'STORE' END WHERE parent.type='PICK_UP' AND (LOWER(parent.drawer.name) LIKE 'sal%' OR LOWER(currencyDetails.currencyCode) LIKE 'sal%' OR LOWER(parent.transactionUser.name) LIKE 'sal%' OR ARRAY  node FOR node IN store WHEN node.nodeType='STORE' AND LOWER(node.name) LIKE 'sal%'  END) AND parent.storeId IN ['S::1','S::2','S::3','S::4','S::5','S::6','S::7','S::31','NODE::7070483e-f2c8-4b33-9360-eeec26e38a38','NODE::7070483e-f2c8-4b33-9360-eeec26e38a39']", server=self.master)
+            results_fake_field = self.run_cbq_query(query="ADVISE SELECT parent.id, parent.createdDate, parent.drawer.name, parent.transactionUser.name as userName, currencyDetails.currencyCode, currencyDetails.totalValue, store[0].name AS storeName FROM TransactionManager AS parent UNNEST parent.details AS currencyDetails LET store = ARRAY node FOR node IN parent.nodeStructure WHEN node.nodeType= 'STORE' END WHERE parent.type='PICK_UP' AND (LOWER(parent.drawer.name) LIKE 'sal%' OR LOWER(currencyDetails.currencyCode) LIKE 'sal%' OR LOWER(parent.transactionUser.name) LIKE 'sal%' OR ARRAY  node FOR node IN store WHEN node.nodeType='STORE' AND LOWER(node.name) LIKE 'sal%'  END) AND parent.storeId IN ['S::1','S::2','S::3','S::4','S::5','S::6','S::7','S::31','NODE::7070483e-f2c8-4b33-9360-eeec26e38a38','NODE::7070483e-f2c8-4b33-9360-eeec26e38a39']", server=self.main)
             for field in field_list1:
                 self.assertTrue(field in
                                 results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes']['indexes'][0]['index_statement'],
@@ -511,7 +511,7 @@ class QueryAdviseTests(QueryTests):
     def test_user_generated_advise_4(self):
         field_list1 =['ALL `orderItemsId`','`type`','`toGoDetails`.`desiredDate`','`hasBeenPrinted`']
         try:
-            results_fake_field = self.run_cbq_query(query='ADVISE SELECT RAW SUM(oi.quantity) FROM `ipratico_store` AS o UNNEST o.orderItemsId AS oiId JOIN `ipratico_store` AS oi ON KEYS oiId JOIN `ipratico_store` AS p ON KEYS oi.saleItem.productId WHERE o.type = "order" AND SOME c IN o.channels SATISFIES c = "lct_123" END AND o.toGoDetails.desiredDate >= "2020-01-01" AND o.toGoDetails.desiredDate < "2020-01-05" AND o.closedDate IS NOT VALUED AND (o.hasBeenPrinted = false OR o.hasBeenPrinted IS NOT VALUED) AND p.productCategoryId = "product_category:5f0d574d-38be-4fd7-bf75-05bd4d946268"', server=self.master)
+            results_fake_field = self.run_cbq_query(query='ADVISE SELECT RAW SUM(oi.quantity) FROM `ipratico_store` AS o UNNEST o.orderItemsId AS oiId JOIN `ipratico_store` AS oi ON KEYS oiId JOIN `ipratico_store` AS p ON KEYS oi.saleItem.productId WHERE o.type = "order" AND SOME c IN o.channels SATISFIES c = "lct_123" END AND o.toGoDetails.desiredDate >= "2020-01-01" AND o.toGoDetails.desiredDate < "2020-01-05" AND o.closedDate IS NOT VALUED AND (o.hasBeenPrinted = false OR o.hasBeenPrinted IS NOT VALUED) AND p.productCategoryId = "product_category:5f0d574d-38be-4fd7-bf75-05bd4d946268"', server=self.main)
             for field in field_list1:
                 self.assertTrue(field in
                                 results_fake_field['results'][0]['advice']['adviseinfo']['recommended_indexes'][

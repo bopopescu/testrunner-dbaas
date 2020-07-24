@@ -33,7 +33,7 @@ class OpsChangeCasTests(CasBaseTest):
         gen_update = BlobGenerator('nosql', 'nosql-', self.value_size, end=(self.num_items // 2 - 1))
         gen_delete = BlobGenerator('nosql', 'nosql-', self.value_size, start=self.num_items // 2, end=(3*self.num_items // 4 - 1))
         gen_expire = BlobGenerator('nosql', 'nosql-', self.value_size, start=3*self.num_items // 4, end=self.num_items)
-        self._load_all_buckets(self.master, gen_load_mysql, "create", 0, flag=self.item_flag)
+        self._load_all_buckets(self.main, gen_load_mysql, "create", 0, flag=self.item_flag)
 
         if self.doc_ops is not None:
             if "update" in self.doc_ops:
@@ -44,7 +44,7 @@ class OpsChangeCasTests(CasBaseTest):
                 self.verify_cas("delete", gen_delete)
             if "expire" in self.doc_ops:
                 self.verify_cas("expire", gen_expire)
-        self._wait_for_stats_all_buckets([self.master])  # we only need 1 node to do cas test
+        self._wait_for_stats_all_buckets([self.main])  # we only need 1 node to do cas test
 
     def verify_cas(self, ops, generator):
         """Verify CAS value manipulation.
@@ -59,7 +59,7 @@ class OpsChangeCasTests(CasBaseTest):
         can not mutate it because it is expired already."""
 
         for bucket in self.buckets:
-            client = VBucketAwareMemcached(RestConnection(self.master), bucket.name)
+            client = VBucketAwareMemcached(RestConnection(self.main), bucket.name)
             gen = generator
             cas_error_collection = []
             data_error_collection = []
@@ -201,7 +201,7 @@ class OpsChangeCasTests(CasBaseTest):
 
         KEY_NAME = 'key1'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, 'default')
 
         # set a key
@@ -225,14 +225,14 @@ class OpsChangeCasTests(CasBaseTest):
 
         rebalance = self.cluster.async_rebalance(self.servers[-1:],
                                                  [],
-                                                 [self.master])
+                                                 [self.main])
         rebalance.result()
         replica_CAS = mc_replica.getMeta(KEY_NAME)[4]
 
         # add the node back
         self.log.info('Add the node back, the max_cas should be healed')
         rebalance = self.cluster.async_rebalance(self.servers[-1:],
-                                                 [self.master],
+                                                 [self.main],
                                                  [])
 
         rebalance.result()
@@ -250,7 +250,7 @@ class OpsChangeCasTests(CasBaseTest):
 
         KEY_NAME = 'key1'
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
 
         # set a key
         client = VBucketAwareMemcached(rest, 'default')
@@ -266,7 +266,7 @@ class OpsChangeCasTests(CasBaseTest):
         corrupt_cas = mc_active.getMeta(KEY_NAME)[4]
 
         # self._restart_memcache('default')
-        remote = RemoteMachineShellConnection(self.master)
+        remote = RemoteMachineShellConnection(self.main)
         remote.stop_server()
         time.sleep(30)
         remote.start_server()
@@ -287,7 +287,7 @@ class OpsChangeCasTests(CasBaseTest):
     def key_not_exists_test(self):
         self.assertTrue(len(self.buckets) > 0, 'at least 1 bucket required')
         bucket = self.buckets[0].name
-        client = VBucketAwareMemcached(RestConnection(self.master), bucket)
+        client = VBucketAwareMemcached(RestConnection(self.main), bucket)
         KEY_NAME = 'key'
 
         for i in range(1500):

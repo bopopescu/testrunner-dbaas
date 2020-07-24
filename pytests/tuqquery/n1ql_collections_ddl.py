@@ -1249,17 +1249,17 @@ class QueryCollectionsDDLTests(QueryTests):
         self.log_config_info()
         bucket_type = self.input.param("bucket_type", self.bucket_type)
 
-        self.collections_helper = CollectionsN1QL(self.master)
-        self.cli_client = CollectionsCLI(self.master)
-        self.rest_client = CollectionsRest(self.master)
+        self.collections_helper = CollectionsN1QL(self.main)
+        self.cli_client = CollectionsCLI(self.main)
+        self.rest_client = CollectionsRest(self.main)
 
         eviction_policy = "noEviction" if bucket_type == "ephemeral" else self.eviction_policy
-        self.bucket_params = self._create_bucket_params(server=self.master, size=100,
+        self.bucket_params = self._create_bucket_params(server=self.main, size=100,
                                                         replicas=self.num_replicas, bucket_type=bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=eviction_policy, lww=self.lww)
-        self.rest_client = CollectionsRest(self.master)
-        self.cli_client = CollectionsCLI(self.master)
+        self.rest_client = CollectionsRest(self.main)
+        self.cli_client = CollectionsCLI(self.main)
         self.log.info("==============  QueryCollectionsDDLTests setup has completed ==============")
 
     def suite_setUp(self):
@@ -1315,7 +1315,7 @@ class QueryCollectionsDDLTests(QueryTests):
             if scope_name not in bucket_scopes:
                 errors.append(f"Cannot create scope {scope_name} in bucket {bucket_name}")
 
-        self.cluster.bucket_delete(self.master, bucket_name)
+        self.cluster.bucket_delete(self.main, bucket_name)
         self.wait_for_bucket_delete(bucket_name, 3, 100)
         self.cluster.create_standard_bucket(bucket_name, 11222, self.bucket_params)
 
@@ -1333,7 +1333,7 @@ class QueryCollectionsDDLTests(QueryTests):
             if scope_name not in bucket_scopes:
                 errors.append(f"Cannot create scope {scope_name} in bucket {bucket_name}")
 
-        self.cluster.bucket_delete(self.master, bucket_name)
+        self.cluster.bucket_delete(self.main, bucket_name)
         self.wait_for_bucket_delete(bucket_name, 3, 100)
         self.cluster.create_standard_bucket(bucket_name, 11222, self.bucket_params)
 
@@ -1351,7 +1351,7 @@ class QueryCollectionsDDLTests(QueryTests):
             if scope_name not in bucket_scopes:
                 errors.append(f"Cannot create scope {scope_name} in bucket {bucket_name}")
 
-        self.cluster.bucket_delete(self.master, bucket_name)
+        self.cluster.bucket_delete(self.main, bucket_name)
         self.wait_for_bucket_delete(bucket_name, 3, 100)
         self.cluster.create_standard_bucket(bucket_name, 11222, self.bucket_params)
 
@@ -1395,7 +1395,7 @@ class QueryCollectionsDDLTests(QueryTests):
             if collection_name not in scope_collections:
                 errors.append(f"Cannot create collection {collection_name} in bucket {bucket_name}")
 
-        self.cluster.bucket_delete(self.master, bucket_name)
+        self.cluster.bucket_delete(self.main, bucket_name)
         self.wait_for_bucket_delete(bucket_name, 3, 100)
 
         self.cluster.create_standard_bucket(bucket_name, 11222, self.bucket_params)
@@ -1414,7 +1414,7 @@ class QueryCollectionsDDLTests(QueryTests):
             if collection_name not in scope_collections:
                 errors.append(f"Cannot create collection {collection_name} in bucket {bucket_name}")
 
-        self.cluster.bucket_delete(self.master, bucket_name)
+        self.cluster.bucket_delete(self.main, bucket_name)
         self.wait_for_bucket_delete(bucket_name, 3, 100)
         self.cluster.create_standard_bucket(bucket_name, 11222, self.bucket_params)
 
@@ -1819,7 +1819,7 @@ class QueryCollectionsDDLTests(QueryTests):
 
         from couchbase.cluster import Cluster
         from couchbase.cluster import PasswordAuthenticator
-        cl = Cluster("couchbase://"+self.master.ip)
+        cl = Cluster("couchbase://"+self.main.ip)
         authenticator = PasswordAuthenticator("Administrator", "password")
         cl.authenticate(authenticator)
         cb = cl.open_bucket("bucket1")
@@ -1876,7 +1876,7 @@ class QueryCollectionsDDLTests(QueryTests):
         return True, ""
 
     def _create_bucket(self, bucket_name):
-        bucket_params = self._create_bucket_params(server=self.master, size=100,
+        bucket_params = self._create_bucket_params(server=self.main, size=100,
                                                    replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                    enable_replica_index=self.enable_replica_index,
                                                    eviction_policy=self.eviction_policy, lww=self.lww)

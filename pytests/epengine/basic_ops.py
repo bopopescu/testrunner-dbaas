@@ -37,7 +37,7 @@ class basic_ops(BaseTestCase):
 
     def setUp(self):
         super(basic_ops, self).setUp()
-        self.src_bucket = RestConnection(self.master).get_buckets()
+        self.src_bucket = RestConnection(self.main).get_buckets()
 
     def tearDown(self):
         super(basic_ops, self).tearDown()
@@ -49,7 +49,7 @@ class basic_ops(BaseTestCase):
         CAS = 1234
         self.log.info('Starting basic ops')
 
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, 'default')
         mcd = client.memcached(KEY_NAME)
 
@@ -94,8 +94,8 @@ class basic_ops(BaseTestCase):
     # Reproduce test case for MB-28078
     def do_setWithMeta_twice(self):
 
-        mc = MemcachedClient(self.master.ip, 11210)
-        mc.sasl_auth_plain(self.master.rest_username, self.master.rest_password)
+        mc = MemcachedClient(self.main.ip, 11210)
+        mc.sasl_auth_plain(self.main.rest_username, self.main.rest_password)
         mc.bucket_select('default')
 
         try:
@@ -136,8 +136,8 @@ class basic_ops(BaseTestCase):
         self.load(gens_load, buckets=self.src_bucket, verify_data=False, batch_size=10)
 
         # check if all the documents(250) are loaded else the test has failed with "Memcached Error 134"
-        mc = MemcachedClient(self.master.ip, 11210)
-        mc.sasl_auth_plain(self.master.rest_username, self.master.rest_password)
+        mc = MemcachedClient(self.main.ip, 11210)
+        mc.sasl_auth_plain(self.main.rest_username, self.main.rest_password)
         mc.bucket_select('default')
         stats = mc.stats()
         self.assertEqual(int(stats['curr_items']), 250)
@@ -154,8 +154,8 @@ class basic_ops(BaseTestCase):
         self.load(gens_load, buckets=self.src_bucket, verify_data=False, batch_size=10)
 
         # check if all the documents(125) are loaded else the test has failed with "Memcached Error 134"
-        mc = MemcachedClient(self.master.ip, 11210)
-        mc.sasl_auth_plain(self.master.rest_username, self.master.rest_password)
+        mc = MemcachedClient(self.main.ip, 11210)
+        mc.sasl_auth_plain(self.main.rest_username, self.main.rest_password)
         mc.bucket_select('default')
         stats = mc.stats()
         self.assertEqual(int(stats['curr_items']), 125)
@@ -168,8 +168,8 @@ class basic_ops(BaseTestCase):
         gens_load = self.generate_docs_bigdata(docs_per_day=1, document_size=(document_size * 1024000))
         self.load(gens_load, buckets=self.src_bucket, verify_data=False, batch_size=10)
 
-        mc = MemcachedClient(self.master.ip, 11210)
-        mc.sasl_auth_plain(self.master.rest_username, self.master.rest_password)
+        mc = MemcachedClient(self.main.ip, 11210)
+        mc.sasl_auth_plain(self.main.rest_username, self.main.rest_password)
         mc.bucket_select('default')
         stats = mc.stats()
         if (document_size > 20):
@@ -185,18 +185,18 @@ class basic_ops(BaseTestCase):
         # Check if diag/eval can be done only by local host
         # epengine.basic_ops.basic_ops.test_diag_eval_curl,disable_diag_eval_non_local=True
 
-        port = self.master.port
+        port = self.main.port
 
         # check if local host can work fine
         cmd=[]
-        cmd_base = 'curl http://{0}:{1}@localhost:{2}/diag/eval '.format(self.master.rest_username,
-                                                                         self.master.rest_password, port)
+        cmd_base = 'curl http://{0}:{1}@localhost:{2}/diag/eval '.format(self.main.rest_username,
+                                                                         self.main.rest_password, port)
         command = cmd_base + '-X POST -d \'os:cmd("env")\''
         cmd.append(command)
         command = cmd_base + '-X POST -d \'case file:read_file("/etc/passwd") of {ok, B} -> io:format("~p~n", [binary_to_term(B)]) end.\''
         cmd.append(command)
 
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         for command in cmd:
             output, error = shell.execute_command(command)
             self.assertNotEqual("API is accessible from localhost only", output[0])
@@ -208,8 +208,8 @@ class basic_ops(BaseTestCase):
 
         # check ip address on diag/eval will not work fine when allow_nonlocal_eval is disabled
         cmd=[]
-        cmd_base = 'curl http://{0}:{1}@{2}:{3}/diag/eval '.format(self.master.rest_username,
-                                                                   self.master.rest_password, self.master.ip, port)
+        cmd_base = 'curl http://{0}:{1}@{2}:{3}/diag/eval '.format(self.main.rest_username,
+                                                                   self.main.rest_password, self.main.ip, port)
         command = cmd_base + '-X POST -d \'os:cmd("env")\''
         cmd.append(command)
         command = cmd_base + '-X POST -d \'case file:read_file("/etc/passwd") of {ok, B} -> io:format("~p~n", [binary_to_term(B)]) end.\''
@@ -223,8 +223,8 @@ class basic_ops(BaseTestCase):
                 self.assertNotEqual("API is accessible from localhost only", output[0])
 
     def verify_stat(self,items, value=b"active" ):
-        mc = MemcachedClient(self.master.ip, 11210)
-        mc.sasl_auth_plain(self.master.rest_username, self.master.rest_password)
+        mc = MemcachedClient(self.main.ip, 11210)
+        mc.sasl_auth_plain(self.main.rest_username, self.main.rest_password)
         mc.bucket_select('default')
         stats = mc.stats()
         self.assertEqual(stats['ep_compression_mode'], value)
@@ -245,11 +245,11 @@ class basic_ops(BaseTestCase):
         # Load some documents with compression mode as active
         gen_create = BlobGenerator('eviction', 'eviction-', self.value_size, end=self.num_items)
         gen_create2 = BlobGenerator('eviction2', 'eviction2-', self.value_size, end=self.num_items)
-        self._load_all_buckets(self.master, gen_create, "create", 0)
+        self._load_all_buckets(self.main, gen_create, "create", 0)
         self._wait_for_stats_all_buckets(self.servers[:self.nodes_init])
         self._verify_stats_all_buckets(self.servers[:self.nodes_init])
 
-        remote = RemoteMachineShellConnection(self.master)
+        remote = RemoteMachineShellConnection(self.main)
         for bucket in self.buckets:
             # Verify the stat or compression_mode active and compressed items should be 10000
             self.verify_stat(items=self.num_items)
@@ -257,8 +257,8 @@ class basic_ops(BaseTestCase):
             # change compression mode to off
             output, _ = remote.execute_couchbase_cli(cli_command='bucket-edit',
                                                      cluster_host="localhost:8091",
-                                                     user=self.master.rest_username,
-                                                     password=self.master.rest_password,
+                                                     user=self.main.rest_username,
+                                                     password=self.main.rest_password,
                                                      options='--bucket=%s --compression-mode off' % bucket.name)
             self.assertTrue(' '.join(output).find('SUCCESS') != -1, 'compression mode set to off')
 
@@ -266,7 +266,7 @@ class basic_ops(BaseTestCase):
             time.sleep(10)
 
         # Load data and check stats to see compression is not done for newly added data
-        self._load_all_buckets(self.master, gen_create2, "create", 0)
+        self._load_all_buckets(self.main, gen_create2, "create", 0)
         self._wait_for_stats_all_buckets(self.servers[:self.nodes_init])
         self._verify_stats_all_buckets(self.servers[:self.nodes_init])
 
@@ -277,7 +277,7 @@ class basic_ops(BaseTestCase):
     def do_get_random_key(self):
         # MB-31548, get_Random key gets hung sometimes.
         self.log.info("Creating few docs in the bucket")
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         client = VBucketAwareMemcached(rest, 'default')
         key = "test_docs-"
         for index in range(1000):
@@ -286,9 +286,9 @@ class basic_ops(BaseTestCase):
                                           json.dumps({'value': 'value1'}))
 
         self.log.info("Performing random_gets")
-        mc = MemcachedClient(self.master.ip, 11210)
-        mc.sasl_auth_plain(self.master.rest_username,
-                           self.master.rest_password)
+        mc = MemcachedClient(self.main.ip, 11210)
+        mc.sasl_auth_plain(self.main.rest_username,
+                           self.main.rest_password)
         mc.bucket_select('default')
 
         count = 0

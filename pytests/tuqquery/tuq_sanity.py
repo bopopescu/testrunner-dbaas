@@ -33,7 +33,7 @@ class QuerySanityTests(QueryTests):
         self.log.info("==============  QuerySanityTests suite_setup has started ==============")
         if self.input.param("fast_count", False):
             random_number = 23917
-            shell = RemoteMachineShellConnection(self.master)
+            shell = RemoteMachineShellConnection(self.main)
             shell.execute_cbworkloadgen(self.rest.username, self.rest.password, random_number, 100,
                                         self.default_bucket_name, 1024, '-j')
             self.run_cbq_query(
@@ -421,19 +421,19 @@ class QuerySanityTests(QueryTests):
             self.prepared_common_body()
 
     def test_leak_goroutine(self):
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         for i in range(20):
-            cmd = 'curl http://%s:6060/debug/pprof/goroutine?debug=2 | grep NewLexer' % self.master.ip
+            cmd = 'curl http://%s:6060/debug/pprof/goroutine?debug=2 | grep NewLexer' % self.main.ip
             o = shell.execute_command(cmd)
             new_curl = json.dumps(o)
             string_curl = json.loads(new_curl)
             self.assertTrue("curl: (7) couldn't connect to host" == str(string_curl[1][1]))
-            cmd = "curl http://%s:8093/query/service -d 'statement=select * from 1+2+3'" % self.master.ip
+            cmd = "curl http://%s:8093/query/service -d 'statement=select * from 1+2+3'" % self.main.ip
             o = shell.execute_command(cmd)
             new_curl = json.dumps(o)
             string_curl = json.loads(new_curl)
             self.assertTrue(len(string_curl) == 2)
-            cmd = 'curl http://%s:6060/debug/pprof/goroutine?debug=2 | grep NewLexer' % self.master.ip
+            cmd = 'curl http://%s:6060/debug/pprof/goroutine?debug=2 | grep NewLexer' % self.main.ip
             o = shell.execute_command(cmd)
             new_curl = json.dumps(o)
             string_curl = json.loads(new_curl)
@@ -472,7 +472,7 @@ class QuerySanityTests(QueryTests):
     def test_primary_count(self):
         # number of documents inserted at the beginning of suite_setup
         random_number = 23918
-        RemoteMachineShellConnection(self.master)
+        RemoteMachineShellConnection(self.main)
         if "STAR" in self.query_to_be_run:
             self.query_to_be_run = self.query_to_be_run.replace("STAR", "*")
         actual_results = self.run_cbq_query(query=self.query_to_be_run)

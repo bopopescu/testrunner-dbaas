@@ -37,7 +37,7 @@ class AltAddrBaseTest(BaseTestCase):
         if self.clusters_dic:
             if len(self.clusters_dic) > 1:
                 self.dest_nodes = self.clusters_dic[1]
-                self.dest_master = self.dest_nodes[0]
+                self.dest_main = self.dest_nodes[0]
             elif len(self.clusters_dic) == 1:
                 self.log.error("=== need 2 cluster to setup xdcr in ini file ===")
             if self.alt_addr_with_xdcr:
@@ -54,9 +54,9 @@ class AltAddrBaseTest(BaseTestCase):
         else:
             self.log.error("**** Cluster config is setup in ini file. ****")
 
-        self.shell = RemoteMachineShellConnection(self.master)
+        self.shell = RemoteMachineShellConnection(self.main)
         if not self.skip_init_check_cbserver:
-            self.rest = RestConnection(self.master)
+            self.rest = RestConnection(self.main)
             self.cb_version = self.rest.get_nodes_version()
 
         self.key_gen = self.input.param("key-gen", True)
@@ -91,13 +91,13 @@ class AltAddrBaseTest(BaseTestCase):
         self.full_v = None
         self.short_v = None
         self.build_number = None
-        cmd =  'curl -g {0}:8091/diag/eval -u {1}:{2} '.format(self.master.ip,
-                                                              self.master.rest_username,
-                                                              self.master.rest_password)
+        cmd =  'curl -g {0}:8091/diag/eval -u {1}:{2} '.format(self.main.ip,
+                                                              self.main.rest_username,
+                                                              self.main.rest_password)
         cmd += '-d "path_config:component_path(bin)."'
         bin_path  = check_output(cmd, shell=True)
         if "bin" not in bin_path:
-            self.fail("Check if cb server install on %s" % self.master.ip)
+            self.fail("Check if cb server install on %s" % self.main.ip)
         else:
             self.cli_command_path = bin_path.replace('"','') + "/"
         self.root_path = LINUX_ROOT_PATH
@@ -110,11 +110,11 @@ class AltAddrBaseTest(BaseTestCase):
         self.base_cb_path = LINUX_CB_PATH
         """ non root path """
         if self.nonroot:
-            self.log_path = "/home/%s%s" % (self.master.ssh_username,
+            self.log_path = "/home/%s%s" % (self.main.ssh_username,
                                             LINUX_COUCHBASE_LOGS_PATH)
-            self.base_cb_path = "/home/%s%s" % (self.master.ssh_username,
+            self.base_cb_path = "/home/%s%s" % (self.main.ssh_username,
                                                 LINUX_CB_PATH)
-            self.root_path = "/home/%s/" % self.master.ssh_username
+            self.root_path = "/home/%s/" % self.main.ssh_username
         if type == 'windows':
             self.os = 'windows'
             self.cmd_ext = ".exe"
@@ -160,7 +160,7 @@ class AltAddrBaseTest(BaseTestCase):
         if self.clusters_dic:
             if len(self.clusters_dic) > 1:
                 self.dest_nodes = self.clusters_dic[1]
-                self.dest_master = self.dest_nodes[0]
+                self.dest_main = self.dest_nodes[0]
                 if self.dest_nodes and len(self.dest_nodes) > 1:
                     self.log.info("======== clean up destination cluster =======")
                     rest = RestConnection(self.dest_nodes[0])
@@ -200,7 +200,7 @@ class AltAddrBaseTest(BaseTestCase):
 
     def backup_reset_clusters(self, servers):
         BucketOperationHelper.delete_all_buckets_or_assert(servers, self)
-        ClusterOperationHelper.cleanup_cluster(servers, master=servers[0])
+        ClusterOperationHelper.cleanup_cluster(servers, main=servers[0])
         #ClusterOperationHelper.wait_for_ns_servers_or_assert(servers, self)
 
     def get_external_IP(self, internal_IP):

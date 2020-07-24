@@ -75,9 +75,9 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
         self.merge_should_fail = self.input.param("merge_should_fail", False)
         self.database_path = COUCHBASE_DATA_PATH
 
-        cmd = 'curl -g {0}:8091/diag/eval -u {1}:{2} '.format(self.master.ip,
-                                                              self.master.rest_username,
-                                                              self.master.rest_password)
+        cmd = 'curl -g {0}:8091/diag/eval -u {1}:{2} '.format(self.main.ip,
+                                                              self.main.rest_username,
+                                                              self.main.rest_password)
         cmd += '-d "path_config:component_path(bin)."'
         bin_path = subprocess.check_output(cmd, shell=True)
         try:
@@ -86,7 +86,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
             pass
         if not self.skip_init_check_cbserver:
             if "bin" not in bin_path:
-                self.fail("Check if cb server install on %s" % self.master.ip)
+                self.fail("Check if cb server install on %s" % self.main.ip)
             else:
                 self.cli_command_location = bin_path.replace('"', '') + "/"
 
@@ -139,9 +139,9 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
         self.seconds_with_ttl = "date +%s --date='{0} seconds'".format(self.replace_ttl_with)
         if info == 'linux':
             if self.nonroot:
-                base_path = "/home/%s" % self.master.ssh_username
+                base_path = "/home/%s" % self.main.ssh_username
                 self.database_path = "%s%s" % (base_path, COUCHBASE_DATA_PATH)
-                self.root_path = "/home/%s/" % self.master.ssh_username
+                self.root_path = "/home/%s/" % self.main.ssh_username
         elif info == 'windows':
             self.os_name = "windows"
             self.cmd_ext = ".exe"
@@ -166,11 +166,11 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
             self.backupset.directory = self.input.param("dir", "/tmp/entbackup")
         else:
             raise Exception("OS not supported.")
-        self.backup_validation_files_location = "/tmp/backuprestore" + self.master.ip
+        self.backup_validation_files_location = "/tmp/backuprestore" + self.main.ip
         self.backupset.backup_host = self.input.clusters[1][0]
-        self.backupset.directory += "_" + self.master.ip
+        self.backupset.directory += "_" + self.main.ip
         self.backupset.name = self.input.param("name", "backup")
-        self.non_master_host = self.input.param("non-master", False)
+        self.non_main_host = self.input.param("non-main", False)
         self.compact_backup = self.input.param("compact-backup", False)
         self.merged = self.input.param("merged", None)
         self.expire_time = self.input.param('expire_time', 0)
@@ -198,7 +198,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
         self.vbucket_filter = self.input.param("vbucket-filter", None)
         self.restore_compression_mode = self.input.param("restore-compression-mode", None)
         self.force_version_upgrade = self.input.param("force-version-upgrade", None)
-        if self.non_master_host:
+        if self.non_main_host:
             self.backupset.cluster_host = self.servers[1]
             self.backupset.cluster_host_username = self.servers[1].rest_username
             self.backupset.cluster_host_password = self.servers[1].rest_password
@@ -287,10 +287,10 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
         self.skip_buckets = self.input.param("skip_buckets", False)
         self.lww_new = self.input.param("lww_new", False)
         self.skip_consistency = self.input.param("skip_consistency", False)
-        self.master_services = self.get_services([self.backupset.cluster_host],
+        self.main_services = self.get_services([self.backupset.cluster_host],
                                                  self.services_init, start_node=0)
-        if not self.master_services:
-            self.master_services = ["kv"]
+        if not self.main_services:
+            self.main_services = ["kv"]
         self.restore_services = self.get_services([self.backupset.restore_cluster_host],
                                                   self.services_init, start_node=0)
         if not self.restore_services:
@@ -327,8 +327,8 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
                 backup_directory = WIN_TMP_PATH_RAW + "entbackup"
             else:
                 raise Exception("OS not supported.")
-            backup_directory += "_" + self.master.ip
-            validation_files_location = "%sbackuprestore" % self.tmp_path + self.master.ip
+            backup_directory += "_" + self.main.ip
+            validation_files_location = "%sbackuprestore" % self.tmp_path + self.main.ip
             if info == 'linux':
                 command = "rm -rf {0}".format(backup_directory)
                 output, error = remote_client.execute_command(command)
@@ -377,7 +377,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
 
     def backup_reset_clusters(self, servers):
         BucketOperationHelper.delete_all_buckets_or_assert(servers, self)
-        ClusterOperationHelper.cleanup_cluster(servers, master=servers[0])
+        ClusterOperationHelper.cleanup_cluster(servers, main=servers[0])
         ClusterOperationHelper.wait_for_ns_servers_or_assert(servers,
                                                              self, debug=False)
 
@@ -568,7 +568,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
 
     def __load_all_buckets(self, cluster=None, item_size=125, ratio=0.9, command_options=""):
         if not cluster:
-            cluster = self.master
+            cluster = self.main
         shell = RemoteMachineShellConnection(cluster)
         for bucket in self.buckets:
             shell.execute_cbworkloadgen(cluster.rest_username,
@@ -1327,7 +1327,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
 
             self.validation_helper.validate_merge(self.backup_validation_files_location)
 
-    def validate_backup_data(self, server_host, server_bucket, master_key,
+    def validate_backup_data(self, server_host, server_bucket, main_key,
                              perNode, getReplica, mode, items, key_check,
                              validate_keys=False,
                              regex_pattern=None):
@@ -1338,7 +1338,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
         data_collector = DataCollector()
         bk_file_data, _ = data_collector.get_kv_dump_from_backup_file(server_host,
                                                                       self.cli_command_location, self.cmd_ext,
-                                                                      self.backupset.directory, master_key,
+                                                                      self.backupset.directory, main_key,
                                                                       self.buckets)
         restore_file_data = bk_file_data
         regex_backup_data = {}
@@ -1616,8 +1616,8 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
     def create_indexes(self):
         gsi_type = "memory_optimized"
         rest = RestConnection(self.backupset.cluster_host)
-        username = self.master.rest_username
-        password = self.master.rest_password
+        username = self.main.rest_username
+        password = self.main.rest_password
         if "5" <= rest.get_nodes_version()[:1]:
             gsi_type = "plasma"
         gsi_type += " -auth {0}:{1} ".format(username, password)
@@ -1728,25 +1728,25 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
         return kv_quota
 
     def _reset_restore_cluster_with_bk_services(self, bk_services):
-        master = self.backupset.restore_cluster_host
+        main = self.backupset.restore_cluster_host
 
         BucketOperationHelper.delete_all_buckets_or_assert(
             self.backupset.restore_cluster, self)
         ClusterOperationHelper.cleanup_cluster(
-            self.backupset.restore_cluster, master=master)
+            self.backupset.restore_cluster, main=main)
 
-        rest = RestConnection(master).force_eject_node()
-        rest = RestConnection(master)
+        rest = RestConnection(main).force_eject_node()
+        rest = RestConnection(main)
         ready = RestHelper(rest).is_ns_server_running()
         if ready:
-            shell = RemoteMachineShellConnection(master)
+            shell = RemoteMachineShellConnection(main)
             shell.enable_diag_eval_on_non_local_hosts()
             shell.disconnect()
         else:
             self.fail("NS server is not ready after reset node")
         bk_services = ['kv', 'index', 'n1ql']
         for i in range(len(self.servers)):
-            if self.servers[i].ip == master.ip:
+            if self.servers[i].ip == main.ip:
                 self.backupset.restore_cluster_host.services = ",".join(bk_services)
                 break
         rest = RestConnection(self.backupset.restore_cluster_host)
@@ -1889,7 +1889,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
                     logs_path, zip_file))
                 if 'redacted-' in zip_file:
                     # Redacted logs include the backup archive one layer deeper
-                    if self.master.ip in zip_file:
+                    if self.main.ip in zip_file:
                         log_archive_names.append("{}/{}".format(
                             ".".join(zip_file.split(".")[:-1]),
                             ".".join(zip_file.split(".")[:-1]).split('-', 1)[1]))
@@ -1898,7 +1898,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
                             zip_file.split(".")[0],
                             zip_file.split(".")[0].split('-', 1)[1]))
                 else:
-                    if self.master.ip in zip_file:
+                    if self.main.ip in zip_file:
                         log_archive_names.append(".".join(zip_file.split(".")[:-1]))
                     else:
                         log_archive_names.append(zip_file.split(".")[0])
@@ -2327,7 +2327,7 @@ class EnterpriseBackupRestoreCollectionBase(BaseTestCase):
         if rs_bucket:
             BucketOperationHelper.delete_all_buckets_or_assert(self.backupset.restore_cluster, self)
         ClusterOperationHelper.cleanup_cluster(self.backupset.restore_cluster,
-                                               master=self.backupset.restore_cluster_host)
+                                               main=self.backupset.restore_cluster_host)
 
         rest_bk = RestConnection(self.backupset.cluster_host)
         bk_storage_mode = rest_bk.get_index_settings()["indexer.settings.storage_mode"]

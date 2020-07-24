@@ -32,12 +32,12 @@ class EventingRecovery(EventingBaseTest):
                                                             replicas=self.num_replicas)
             self.cluster.create_standard_bucket(name=self.src_bucket_name, port=STANDARD_BUCKET_PORT + 1,
                                                 bucket_params=bucket_params)
-            self.src_bucket = RestConnection(self.master).get_buckets()
+            self.src_bucket = RestConnection(self.main).get_buckets()
             self.cluster.create_standard_bucket(name=self.dst_bucket_name, port=STANDARD_BUCKET_PORT + 1,
                                                 bucket_params=bucket_params)
             self.cluster.create_standard_bucket(name=self.metadata_bucket_name, port=STANDARD_BUCKET_PORT + 1,
                                                 bucket_params=bucket_params_meta)
-            self.buckets = RestConnection(self.master).get_buckets()
+            self.buckets = RestConnection(self.main).get_buckets()
         self.gens_load = self.generate_docs(self.docs_per_day)
         self.expiry = 3
         handler_code = self.input.param('handler_code', 'bucket_op')
@@ -80,11 +80,11 @@ class EventingRecovery(EventingBaseTest):
         self.n1ql_helper = N1QLHelper(shell=self.shell, max_verify=self.max_verify, buckets=self.buckets,
                                       item_flag=self.item_flag, n1ql_port=self.n1ql_port,
                                       full_docs_list=self.full_docs_list, log=self.log, input=self.input,
-                                      master=self.master, use_rest=True)
+                                      main=self.main, use_rest=True)
         self.n1ql_helper.create_primary_index(using_gsi=True, server=self.n1ql_node)
         if self.is_expired:
             # set expiry pager interval
-            ClusterOperationHelper.flushctl_set(self.master, "exp_pager_stime", 60, bucket=self.src_bucket_name)
+            ClusterOperationHelper.flushctl_set(self.main, "exp_pager_stime", 60, bucket=self.src_bucket_name)
 
     def tearDown(self):
         super(EventingRecovery, self).tearDown()
@@ -384,10 +384,10 @@ class EventingRecovery(EventingBaseTest):
         self.deploy_function(body)
         # load some data
         if not self.is_expired:
-            task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, self.gens_load,
+            task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, self.gens_load,
                                                 self.buckets[0].kvs[1], 'create', compression=self.sdk_compression)
         else:
-            task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, self.gens_load,
+            task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, self.gens_load,
                                                     self.buckets[0].kvs[1], 'create', compression=self.sdk_compression,
                                                     exp=120)
         # pause handler
@@ -407,7 +407,7 @@ class EventingRecovery(EventingBaseTest):
                 self.verify_eventing_results(self.function_name, self.docs_per_day * 2016, skip_stats_validation=True)
         # delete all documents
         if not self.is_expired:
-            task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, gen_load_non_json_del,
+            task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, gen_load_non_json_del,
                                                     self.buckets[0].kvs[1], 'delete', compression=self.sdk_compression)
         # pause handler
         if self.pause_resume:
@@ -483,7 +483,7 @@ class EventingRecovery(EventingBaseTest):
                                            "username": self.curl_username, "password": self.curl_password,"cookies": self.cookies})
         self.deploy_function(body)
         # load some data
-        task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, self.gens_load,
+        task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, self.gens_load,
                                                 self.buckets[0].kvs[1], 'create', compression=self.sdk_compression)
         # reboot eventing node when it is processing mutations
         self.reboot_server(n1ql_node)
@@ -511,7 +511,7 @@ class EventingRecovery(EventingBaseTest):
                                            "username": self.curl_username, "password": self.curl_password,"cookies": self.cookies})
         self.deploy_function(body)
         # load some data
-        task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, self.gens_load,
+        task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, self.gens_load,
                                                 self.buckets[0].kvs[1], 'create', compression=self.sdk_compression)
         # reboot eventing node when it is processing mutations
         self.kill_erlang_service(n1ql_node)
@@ -670,7 +670,7 @@ class EventingRecovery(EventingBaseTest):
             body['depcfg']['curl'].append({"hostname": self.hostname, "value": "server", "auth_type": self.auth_type,
                                            "username": self.curl_username, "password": self.curl_password,"cookies": self.cookies})
         try:
-            task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, self.gens_load,
+            task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, self.gens_load,
                                                     self.buckets[0].kvs[1], 'create', compression=self.sdk_compression)
         except Exception as e:
             log.info("error while loading data")
@@ -686,7 +686,7 @@ class EventingRecovery(EventingBaseTest):
                                                          self.src_bucket_name)
         mem_client.start_persistence()
         self.wait_for_handler_state(body['appname'], "deployed")
-        stats_src = RestConnection(self.master).get_bucket_stats(bucket=self.src_bucket_name)
+        stats_src = RestConnection(self.main).get_bucket_stats(bucket=self.src_bucket_name)
         log.info(stats_src)
         self.verify_eventing_results(self.function_name, stats_src["curr_items"], skip_stats_validation=True)
 
@@ -703,7 +703,7 @@ class EventingRecovery(EventingBaseTest):
             body['depcfg']['curl'].append({"hostname": self.hostname, "value": "server", "auth_type": self.auth_type,
                                            "username": self.curl_username, "password": self.curl_password,"cookies": self.cookies})
         try:
-            task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, self.gens_load,
+            task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, self.gens_load,
                                                     self.buckets[0].kvs[1], 'create', compression=self.sdk_compression)
         except Exception as e:
             log.info("error while loading data")
@@ -726,7 +726,7 @@ class EventingRecovery(EventingBaseTest):
             self.resume_function(body)
         else:
             self.wait_for_handler_state(body['appname'], "deployed")
-        stats_src = RestConnection(self.master).get_bucket_stats(bucket=self.src_bucket_name)
+        stats_src = RestConnection(self.main).get_bucket_stats(bucket=self.src_bucket_name)
         log.info(stats_src)
         self.verify_eventing_results(self.function_name, stats_src["curr_items"], skip_stats_validation=True)
 
@@ -949,7 +949,7 @@ class EventingRecovery(EventingBaseTest):
         if self.pause_resume:
             self.pause_function(body)
         # load some data
-        task = self.cluster.async_load_gen_docs(self.master, self.src_bucket_name, self.gens_load,
+        task = self.cluster.async_load_gen_docs(self.main, self.src_bucket_name, self.gens_load,
                                                 self.buckets[0].kvs[1], 'create', compression=self.sdk_compression)
         self.sleep(10)
         try:

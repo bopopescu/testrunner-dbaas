@@ -23,16 +23,16 @@ class BasicCollections(BaseTestCase):
         self.input = TestInputSingleton.input
         self.default_bucket_name = self.input.param("default_bucket_name", "default")
         self.servers = self.input.servers
-        self.master = self.servers[0]
+        self.main = self.servers[0]
         self.use_rest = self.input.param("use_rest", True)
         self.use_cli = self.input.param("use_cli", False)
         self.num_items = self.input.param("items", 100)
         self.value_size = self.input.param("value_size", 512)
-        self.rest = CollectionsRest(self.master)
-        self.cli = CollectionsCLI(self.master)
+        self.rest = CollectionsRest(self.main)
+        self.cli = CollectionsCLI(self.main)
         # self.cli.enable_dp()
-        self.conn = RestConnection(self.master)
-        self.stat = CollectionsStats(self.master)
+        self.conn = RestConnection(self.main)
+        self.stat = CollectionsStats(self.main)
         self.conn.delete_all_buckets()
         time.sleep(5)
         try:
@@ -187,7 +187,7 @@ class BasicCollections(BaseTestCase):
 
         self.gen_create = SDKDataLoader(num_ops=self.num_items, percent_create=80, percent_update=20,
                                         percent_delete=20)
-        self._load_all_buckets(self.master, self.gen_create)
+        self._load_all_buckets(self.main, self.gen_create)
         load = time.time()
         self.log.info("Done loading {} collections in bucket {} in {}s"
                       .format(self.collection_num, self.bucket_name, round(load - create)))
@@ -213,8 +213,8 @@ class BasicCollections(BaseTestCase):
         self.sleep(10)
 
         # create memcached client
-        mc = MemcachedClient(self.master.ip, 11210)
-        mc.sasl_auth_plain(self.master.rest_username, self.master.rest_password)
+        mc = MemcachedClient(self.main.ip, 11210)
+        mc.sasl_auth_plain(self.main.rest_username, self.main.rest_password)
 
         # enable collection and get collections
         mc.enable_collections()

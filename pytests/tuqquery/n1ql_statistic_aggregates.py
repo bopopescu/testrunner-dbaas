@@ -413,14 +413,14 @@ class StatisticAggregatesTest(QueryTests):
     '''########################################################################'''
 
     def _load_test_data(self):
-        temp_bucket_params = self._create_bucket_params(server=self.master, size=self.bucket_size,
+        temp_bucket_params = self._create_bucket_params(server=self.main, size=self.bucket_size,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)
         self.cluster.create_standard_bucket(self.test_buckets, 11222, temp_bucket_params)
 
         for bucket in self.buckets:
-            self.cluster.bucket_flush(self.master, bucket=bucket, timeout=self.wait_timeout * 5)
+            self.cluster.bucket_flush(self.main, bucket=bucket, timeout=self.wait_timeout * 5)
 
         for i1 in range(len(self.numbers)):
             query = "insert into " + self.query_bucket + " values ('key_" + str(i1) + "', {"
@@ -462,14 +462,14 @@ class StatisticAggregatesTest(QueryTests):
             self.run_cbq_query(query)
 
     def _load_test_data_nulls_missings(self):
-        temp_bucket_params = self._create_bucket_params(server=self.master, size=self.bucket_size,
+        temp_bucket_params = self._create_bucket_params(server=self.main, size=self.bucket_size,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)
         self.cluster.create_standard_bucket(self.test_buckets, 11222, temp_bucket_params)
 
         for bucket in self.buckets:
-            self.cluster.bucket_flush(self.master, bucket=bucket, timeout=self.wait_timeout * 5)
+            self.cluster.bucket_flush(self.main, bucket=bucket, timeout=self.wait_timeout * 5)
 
         for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
             int_val = "null"
@@ -500,14 +500,14 @@ class StatisticAggregatesTest(QueryTests):
         self.run_cbq_query('CREATE INDEX ix3 ON {0}(float_field);'.format(self.query_bucket))
 
     def _load_mixed_datatypes(self):
-        temp_bucket_params = self._create_bucket_params(server=self.master, size=self.bucket_size,
+        temp_bucket_params = self._create_bucket_params(server=self.main, size=self.bucket_size,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)
         self.cluster.create_standard_bucket(self.test_buckets, 11222, temp_bucket_params)
 
         for bucket in self.buckets:
-            self.cluster.bucket_flush(self.master, bucket=bucket, timeout=self.wait_timeout * 5)
+            self.cluster.bucket_flush(self.main, bucket=bucket, timeout=self.wait_timeout * 5)
 
         query = "insert into " + self.query_bucket + " values ('key_1', {'int_field': 1, 'float_field': 3.14})"
         self.run_cbq_query(query)
@@ -535,4 +535,4 @@ class StatisticAggregatesTest(QueryTests):
         self.run_cbq_query('CREATE INDEX ix3 ON {0}(float_field);'.format(self.query_bucket))
 
     def _unload_test_data(self):
-        self.cluster.bucket_delete(self.master, self.test_buckets)
+        self.cluster.bucket_delete(self.main, self.test_buckets)

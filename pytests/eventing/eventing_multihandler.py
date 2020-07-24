@@ -27,7 +27,7 @@ class EventingMultiHandler(EventingBaseTest):
         bucket_params_meta = self._create_bucket_params(server=self.server, size=self.metadata_bucket_size,
                                                         replicas=self.num_replicas)
         self.create_n_buckets(self.src_bucket_name,self.num_src_buckets)
-        self.buckets = RestConnection(self.master).get_buckets()
+        self.buckets = RestConnection(self.main).get_buckets()
         if self.num_dst_buckets > 0:
             self.create_n_buckets(self.dst_bucket_name,self.num_dst_buckets)
         self.cluster.create_standard_bucket(name=self.metadata_bucket_name, port=STANDARD_BUCKET_PORT + 1,
@@ -39,7 +39,7 @@ class EventingMultiHandler(EventingBaseTest):
             self.n1ql_helper = N1QLHelper(shell=self.shell, max_verify=self.max_verify, buckets=self.buckets,
                                           item_flag=self.item_flag, n1ql_port=self.n1ql_port,
                                           full_docs_list=self.full_docs_list, log=self.log, input=self.input,
-                                          master=self.master, use_rest=True)
+                                          main=self.main, use_rest=True)
             self.n1ql_helper.create_primary_index(using_gsi=True, server=self.n1ql_node)
 
     def create_n_buckets(self,name,number):

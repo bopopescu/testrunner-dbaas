@@ -22,7 +22,7 @@ class QueryCollectionsUseKeys(QueryTests):
         self.log.info("==============  QueryCollectionsUseKeys setup has started ==============")
         self.skip_load = True
         self.collection_bucket_name = 'default_1'
-        self.bucket_params = self._create_bucket_params(server=self.master, size=100,
+        self.bucket_params = self._create_bucket_params(server=self.main, size=100,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)
@@ -31,7 +31,7 @@ class QueryCollectionsUseKeys(QueryTests):
         self.scope_name = "my_scope"
         self.my_collection_name = "my_collection"
 
-        self.col_rest = CollectionsRest(self.master)
+        self.col_rest = CollectionsRest(self.main)
         self.buckets = self.rest.get_buckets()
 
         result = self.col_rest.create_scope_collection(bucket=self.collection_bucket_name, scope=self.scope_name,
@@ -41,7 +41,7 @@ class QueryCollectionsUseKeys(QueryTests):
         self.num_items = 1000
         self.gen_create = SDKDataLoader(num_ops=self.num_items, percent_create=100, percent_update=0,
                                         percent_delete=0, scope=self.scope_name, collection=self.my_collection_name)
-        self._load_all_buckets(self.master, self.gen_create)
+        self._load_all_buckets(self.main, self.gen_create)
 
         if not self.query_context:
             self.col_namespace = f"default:{self.collection_bucket_name}.{self.scope_name}.{self.my_collection_name}"

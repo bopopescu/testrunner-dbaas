@@ -26,8 +26,8 @@ class ntonencryptionTest(BaseTestCase):
     def setUp(self):
         super(ntonencryptionTest, self).setUp()
         self._reset_original()
-        self.bucket_list = RestConnection(self.master).get_buckets()
-        self.shell = RemoteMachineShellConnection(self.master)
+        self.bucket_list = RestConnection(self.main).get_buckets()
+        self.shell = RemoteMachineShellConnection(self.main)
         self.item_flag = self.input.param("item_flag", 4042322160)
         self.full_docs_list = ''
         self.n1ql_port = 8093
@@ -80,7 +80,7 @@ class ntonencryptionTest(BaseTestCase):
                                          start=start_key, end=end_key)
             self.log.info("%s %s documents..." % (operation, num_items))
             try:
-                self._load_all_buckets(self.master, gen_load, operation, 0)
+                self._load_all_buckets(self.main, gen_load, operation, 0)
                 #self._verify_stats_all_buckets(self.input.servers)
             except Exception as e:
                 self.log.info("Exception is {0}".format(e))
@@ -151,7 +151,7 @@ class ntonencryptionTest(BaseTestCase):
                                                   n1ql_port=self.n1ql_port,
                                                   full_docs_list=self.full_docs_list,
                                                   log=self.log, input=self.input,
-                                                  master=self.n1ql_node,
+                                                  main=self.n1ql_node,
                                                   use_rest=True
                                                   )
                 query = "Create index " + index_field + " on default(" + index_field + ")"
@@ -358,7 +358,7 @@ class ntonencryptionTest(BaseTestCase):
         rebalance.result()
         if self.ntonencrypt == 'disable' and self.enable_nton_local == True:
             ntonencryptionBase().setup_nton_cluster(self.servers,'enable',self.local_clusterEncryption)
-        #ntonencryptionBase().get_cluster_nton_status(self.master)   
+        #ntonencryptionBase().get_cluster_nton_status(self.main)   
         final_result = ntonencryptionBase().check_server_ports(self.servers)
         ntonencryptionBase().ntonencryption_cli(self.servers, 'disable')
         final_result = ntonencryptionBase().check_server_ports(self.servers)
@@ -372,11 +372,11 @@ class ntonencryptionTest(BaseTestCase):
     def test_add_nodes_x509_rebalance(self):
         servs_inout = self.servers[self.nodes_init:]
         services_in = []
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         copy_servers = copy.deepcopy(self.servers)
         self.log.info( 'before cert generate')
-        x509main(self.master)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
-        x509main(self.master).setup_master()
+        x509main(self.main)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
+        x509main(self.main).setup_main()
         x509main().setup_cluster_nodes_ssl(servs_inout)
 
 
@@ -397,7 +397,7 @@ class ntonencryptionTest(BaseTestCase):
         self.check_all_services(self.servers)
         
         #ntonencryptionBase().get_ntonencryption_status(self.servers)
-        #ntonencryptionBase().get_cluster_nton_status(self.master)
+        #ntonencryptionBase().get_cluster_nton_status(self.main)
         final_result = ntonencryptionBase().check_server_ports(self.servers)
         result = ntonencryptionBase().validate_results(self.servers, final_result, self.ntonencrypt_level)
         self.assertTrue(result,'Issue with results with x509 enable for sets')
@@ -412,12 +412,12 @@ class ntonencryptionTest(BaseTestCase):
     
     def test_init_nodes_x509(self):
         servs_inout = self.servers[1:4]
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         copy_servers = copy.deepcopy(self.servers)
         self.log.info( 'before cert generate')
         if self.x509enable:
-            x509main(self.master)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
-            x509main(self.master).setup_master()
+            x509main(self.main)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
+            x509main(self.main).setup_main()
             x509main().setup_cluster_nodes_ssl(servs_inout,True)
         
         if self.ntonencrypt == 'disable' and self.enable_nton_local == True:
@@ -429,7 +429,7 @@ class ntonencryptionTest(BaseTestCase):
         self.check_all_services(self.servers)
         
         #ntonencryptionBase().get_ntonencryption_status(self.servers)
-        #ntonencryptionBase().get_cluster_nton_status(self.master)
+        #ntonencryptionBase().get_cluster_nton_status(self.main)
         final_result = ntonencryptionBase().check_server_ports(self.servers)
         self.log.info("{0}".format(final_result))
         result = ntonencryptionBase().validate_results(self.servers, final_result, self.ntonencrypt_level)
@@ -444,11 +444,11 @@ class ntonencryptionTest(BaseTestCase):
     def test_add_nodes_x509_rebalance_rotate(self):
         servs_inout = self.servers[self.nodes_init:]
         services_in = []
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         copy_servers = copy.deepcopy(self.servers)
         self.log.info( 'before cert generate')
-        x509main(self.master)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
-        x509main(self.master).setup_master()
+        x509main(self.main)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
+        x509main(self.main).setup_main()
         x509main().setup_cluster_nodes_ssl(servs_inout)
         for service in self.services_in.split("-"):
             services_in.append(service.split(":")[0])
@@ -466,11 +466,11 @@ class ntonencryptionTest(BaseTestCase):
             self.assertTrue(encryption_result,"Retries Exceeded. Cannot enable n2n encryption")
 
 
-        x509main(self.master)._delete_inbox_folder()
-        x509main(self.master)._generate_cert(self.servers, root_cn="CB\ Authority", type='openssl', client_ip='172.16.1.174',wildcard_dns=self.wildcard_dns)
+        x509main(self.main)._delete_inbox_folder()
+        x509main(self.main)._generate_cert(self.servers, root_cn="CB\ Authority", type='openssl', client_ip='172.16.1.174',wildcard_dns=self.wildcard_dns)
         ntonencryptionBase().change_cluster_encryption_cli(self.servers, 'control')
         ntonencryptionBase().ntonencryption_cli(self.servers, 'disable')
-        x509main(self.master).setup_master()
+        x509main(self.main).setup_main()
         x509main().setup_cluster_nodes_ssl(self.servers, reload_cert=True)
         ntonencryptionBase().ntonencryption_cli(self.servers, 'enable')
         ntonencryptionBase().change_cluster_encryption_cli(self.servers,self.ntonencrypt_level)
@@ -479,7 +479,7 @@ class ntonencryptionTest(BaseTestCase):
         self.check_all_services(self.servers)
         
         #ntonencryptionBase().get_ntonencryption_status(self.servers)
-        #ntonencryptionBase().get_cluster_nton_status(self.master)
+        #ntonencryptionBase().get_cluster_nton_status(self.main)
         final_result = ntonencryptionBase().check_server_ports(self.servers)
         result = ntonencryptionBase().validate_results(self.servers, final_result, self.ntonencrypt_level)
         self.assertTrue(result,'Issue with results with x509 enable for sets')
@@ -494,11 +494,11 @@ class ntonencryptionTest(BaseTestCase):
     def test_add_nodes_x509_rebalance_rotate_disable(self):
         servs_inout = self.servers[self.nodes_init:]
         services_in = []
-        rest = RestConnection(self.master)
+        rest = RestConnection(self.main)
         copy_servers = copy.deepcopy(self.servers)
         self.log.info( 'before cert generate')
-        x509main(self.master)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
-        x509main(self.master).setup_master()
+        x509main(self.main)._generate_cert(copy_servers, type='openssl', encryption='', key_length=1024, client_ip='172.16.1.174', alt_names='non_default', dns=None, uri=None,wildcard_dns=self.wildcard_dns)
+        x509main(self.main).setup_main()
         x509main().setup_cluster_nodes_ssl(servs_inout)
         for service in self.services_in.split("-"):
             services_in.append(service.split(":")[0])
@@ -518,9 +518,9 @@ class ntonencryptionTest(BaseTestCase):
         ntonencryptionBase().change_cluster_encryption_cli(self.servers, 'control')
         ntonencryptionBase().ntonencryption_cli(self.servers, 'disable')
         
-        x509main(self.master)._delete_inbox_folder()
-        x509main(self.master)._generate_cert(self.servers, root_cn="CB\ Authority", type='openssl', client_ip='172.16.1.174',wildcard_dns=self.wildcard_dns)
-        x509main(self.master).setup_master()
+        x509main(self.main)._delete_inbox_folder()
+        x509main(self.main)._generate_cert(self.servers, root_cn="CB\ Authority", type='openssl', client_ip='172.16.1.174',wildcard_dns=self.wildcard_dns)
+        x509main(self.main).setup_main()
         x509main().setup_cluster_nodes_ssl(self.servers, reload_cert=True)
         
         ntonencryptionBase().ntonencryption_cli(self.servers, 'enable')
@@ -529,7 +529,7 @@ class ntonencryptionTest(BaseTestCase):
         self.check_all_services(self.servers)
         
         #ntonencryptionBase().get_ntonencryption_status(self.servers)
-        #ntonencryptionBase().get_cluster_nton_status(self.master)
+        #ntonencryptionBase().get_cluster_nton_status(self.main)
         final_result = ntonencryptionBase().check_server_ports(self.servers)
         result = ntonencryptionBase().validate_results(self.servers, final_result, self.ntonencrypt_level)
         self.assertTrue(result,'Issue with results with x509 enable for sets')

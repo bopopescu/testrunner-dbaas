@@ -1101,7 +1101,7 @@ class QueriesUpgradeTestsNew(QueryTests, NewUpgradeBaseTest):
                                      + str(i) + "','int_field':"+str(i)+"})"
             self.run_cbq_query(initial_statement)
 
-        shell = RemoteMachineShellConnection(self.master)
+        shell = RemoteMachineShellConnection(self.main)
         shell.execute_cbworkloadgen(self.username, self.password, 15000, 100, "big_bucket", 1024, '-j')
 
         for i in range(0, 999, 1):
@@ -1215,25 +1215,25 @@ class QueriesUpgradeTestsNew(QueryTests, NewUpgradeBaseTest):
     # ##################################### INIT NODES ####################
 
     def _init_nodes(self):
-        test_bucket_params = self._create_bucket_params(server=self.master, size=self.bucket_size,
+        test_bucket_params = self._create_bucket_params(server=self.main, size=self.bucket_size,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)
         self.cluster.create_standard_bucket("test_bucket", 11222, test_bucket_params)
 
-        test_bucket_params = self._create_bucket_params(server=self.master, size=100,
+        test_bucket_params = self._create_bucket_params(server=self.main, size=100,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)
         self.cluster.create_standard_bucket("wf_bucket", 11222, test_bucket_params)
 
-        temp_bucket_params = self._create_bucket_params(server=self.master, size=100,
+        temp_bucket_params = self._create_bucket_params(server=self.main, size=100,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)
         self.cluster.create_standard_bucket("aggs_bucket", 11222, temp_bucket_params)
 
-        temp_bucket_params = self._create_bucket_params(server=self.master, size=100,
+        temp_bucket_params = self._create_bucket_params(server=self.main, size=100,
                                                         replicas=self.num_replicas, bucket_type=self.bucket_type,
                                                         enable_replica_index=self.enable_replica_index,
                                                         eviction_policy=self.eviction_policy, lww=self.lww)

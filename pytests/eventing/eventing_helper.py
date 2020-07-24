@@ -24,7 +24,7 @@ class EventingHelper:
     Sample usage:
 
         from eventing_helper import EventingHelper
-        event=EventingHelper(servers=self.servers,master=self.master)
+        event=EventingHelper(servers=self.servers,main=self.main)
         event.deploy_bucket_op_function()
         event.verify_documents_in_destination_bucket('test_import_function_1',1,'dst_bucket')
         event.undeploy_bucket_op_function()
@@ -35,12 +35,12 @@ class EventingHelper:
         event.verify_documents_in_destination_bucket('bucket_op_sbm', 1, 'source_bucket_mutation')
         event.undeploy_sbm_function()
     '''
-    def __init__(self,servers,master):
-        if servers == None or master == None:
+    def __init__(self,servers,main):
+        if servers == None or main == None:
             return
         self.servers=servers
-        self.master=master
-        self.eventing_nodes= self.get_nodes_from_services_map(service_type="eventing",servers=servers,master=master,get_all_nodes=True)
+        self.main=main
+        self.eventing_nodes= self.get_nodes_from_services_map(service_type="eventing",servers=servers,main=main,get_all_nodes=True)
         self.eventing_rest=RestConnection(self.eventing_nodes[0])
 
     def get_handler_json(self,function):
@@ -301,12 +301,12 @@ class EventingHelper:
 
 
     def get_nodes_from_services_map(self, service_type="n1ql", get_all_nodes=False,
-                                    servers=None, master=None):
+                                    servers=None, main=None):
         if not servers:
             servers = self.servers
-        if not master:
-            master = self.master
-        self.get_services_map(master=master)
+        if not main:
+            main = self.main
+        self.get_services_map(main=main)
         if (service_type not in self.services_map):
             log.info("cannot find service node {0} in cluster " \
                           .format(service_type))
@@ -371,14 +371,14 @@ class EventingHelper:
                     raise e
 
 
-    def get_services_map(self, reset=True, master=None):
+    def get_services_map(self, reset=True, main=None):
         if not reset:
             return
         else:
             self.services_map = {}
-        if not master:
-            master = self.master
-        rest = RestConnection(master)
+        if not main:
+            main = self.main
+        rest = RestConnection(main)
         map = rest.get_nodes_services()
         for key, val in map.iteritems():
             for service in val:

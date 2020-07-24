@@ -50,7 +50,7 @@ class SecondaryIndexArrayIndexTests(BaseSecondaryIndexingTests):
     def _create_bucket(self, bucketname):
         self.rest.create_bucket(bucket=bucketname, ramQuotaMB=100, authType="sasl",
                                 saslPassword="password")
-        ready = BucketOperationHelper.wait_for_memcached(self.master, bucketname)
+        ready = BucketOperationHelper.wait_for_memcached(self.main, bucketname)
         self.assertTrue(ready, msg="wait_for_memcached failed")
 
     def _load_aggregate_function_dataset(self, buckets=[]):
@@ -344,7 +344,7 @@ class SecondaryIndexArrayIndexTests(BaseSecondaryIndexingTests):
                                          query_definitions=[query_definition])
 
     def _update_document(self, bucket_name, key, document):
-        url = 'couchbase://{ip}/{name}'.format(ip=self.master.ip, name=bucket_name)
+        url = 'couchbase://{ip}/{name}'.format(ip=self.main.ip, name=bucket_name)
         bucket = Bucket(url, username=bucket_name, password="password")
         bucket.upsert(key, document)
 

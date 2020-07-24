@@ -16,12 +16,12 @@ class EventingExpired(EventingBaseTest):
                                                        replicas=0)
             self.cluster.create_standard_bucket(name=self.src_bucket_name, port=STANDARD_BUCKET_PORT + 1,
                                                 bucket_params=bucket_params)
-            self.src_bucket = RestConnection(self.master).get_buckets()
+            self.src_bucket = RestConnection(self.main).get_buckets()
             self.cluster.create_standard_bucket(name=self.dst_bucket_name, port=STANDARD_BUCKET_PORT + 1,
                                                 bucket_params=bucket_params)
             self.cluster.create_standard_bucket(name=self.metadata_bucket_name, port=STANDARD_BUCKET_PORT + 1,
                                                 bucket_params=bucket_params)
-            self.buckets = RestConnection(self.master).get_buckets()
+            self.buckets = RestConnection(self.main).get_buckets()
         self.gens_load = self.generate_docs(self.docs_per_day)
         self.expiry = 3
         query = "create primary index on {}".format(self.src_bucket_name)
@@ -35,7 +35,7 @@ class EventingExpired(EventingBaseTest):
         self.load(self.gens_load, buckets=self.src_bucket, flag=self.item_flag, verify_data=False,
                   batch_size=self.batch_size, exp=1)
         # set expiry pager interval
-        ClusterOperationHelper.flushctl_set(self.master, "exp_pager_stime", 10, bucket=self.src_bucket_name)
+        ClusterOperationHelper.flushctl_set(self.main, "exp_pager_stime", 10, bucket=self.src_bucket_name)
         body = self.create_save_function_body(self.function_name, "handler_code/bucket_op_expired.js", worker_count=3)
         self.deploy_function(body)
         self.pause_function(body)

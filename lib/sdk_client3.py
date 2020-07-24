@@ -21,7 +21,7 @@ from memcached.helper.old_kvstore import ClientKeyValueStore
 class SDKClient(object):
     sdk_connections = 0
     sdk_disconnections = 0
-    """Python SDK Client Implementation for testrunner - master branch Implementation"""
+    """Python SDK Client Implementation for testrunner - main branch Implementation"""
 
     def __init__(self, bucket, hosts=["localhost"], scheme="couchbase",
                  ssl_path=None, uhm_options=None, password=None,
@@ -721,38 +721,38 @@ class SDKClient(object):
         except CouchbaseException as e:
             raise
 
-    def observe(self, key, master_only=False, scope=None, collection=None):
+    def observe(self, key, main_only=False, scope=None, collection=None):
         try:
             if collection:
                 self.collection_connect(scope, collection)
-                return self.collection.observe(key, master_only=master_only)
+                return self.collection.observe(key, main_only=main_only)
             else:
-                return self.default_collection.observe(key, master_only=master_only)
+                return self.default_collection.observe(key, main_only=main_only)
         except CouchbaseException as e:
             try:
                 time.sleep(10)
                 if collection:
-                    return self.collection.observe(key, master_only=master_only)
+                    return self.collection.observe(key, main_only=main_only)
                 else:
-                    return self.default_collection.observe(key, master_only=master_only)
+                    return self.default_collection.observe(key, main_only=main_only)
             except CouchbaseException as e:
                 raise
 
-    def observe_multi(self, keys, master_only=False, scope=None, collection=None):
+    def observe_multi(self, keys, main_only=False, scope=None, collection=None):
         try:
             if collection:
                 self.collection_connect(scope, collection)
-                data = self.collection.observe_multi(keys, master_only=master_only)
+                data = self.collection.observe_multi(keys, main_only=main_only)
             else:
-                data = self.default_collection.observe_multi(keys, master_only=master_only)
+                data = self.default_collection.observe_multi(keys, main_only=main_only)
             return self.__translate_observe_multi(data)
         except CouchbaseException as e:
             try:
                 time.sleep(10)
                 if collection:
-                    data = self.collection.observe_multi(keys, master_only=master_only)
+                    data = self.collection.observe_multi(keys, main_only=main_only)
                 else:
-                    data = self.default_collection.observe_multi(keys, master_only=master_only)
+                    data = self.default_collection.observe_multi(keys, main_only=main_only)
                 return self.__translate_observe_multi(data)
             except CouchbaseException as e:
                 raise
